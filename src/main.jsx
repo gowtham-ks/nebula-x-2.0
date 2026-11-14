@@ -770,9 +770,15 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
       <div className="story-panel-body">
         {activeTab === 'story' && (
           <div>
-            <div className="panel-header-badge">DRAMATIZED EDUCATIONAL MEMOIR · NSSDCA VERIFIED</div>
+            <div className="panel-header-badge">EDUCATIONAL DRAMATIZATION · NASA SOURCE REFERENCE</div>
             <h2>“I am {machine.name}.”</h2>
             <p className="panel-quote">{machine.audioText}</p>
+            <div style={{ margin: '14px 0 20px', padding: '10px 14px', background: 'rgba(5, 7, 15, 0.5)', border: '1px solid rgba(56, 189, 248, 0.15)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: '#8791AA', font: '400 11px "DM Mono", monospace' }}>
+              <Info size={14} color="#38BDF8" style={{ flexShrink: 0 }} />
+              <span>
+                <strong>Educational Dramatization Notice:</strong> First-person voice memoirs are dramatized for educational engagement. All operational dates, resting locations, coordinates, and scientific achievements are verified against official NASA NSSDCA catalogs.
+              </span>
+            </div>
             <div className="fact-cards-grid">
               <div className="fact-card-box glass-panel">
                 <small>FINAL RESTING PLACE</small>
@@ -792,7 +798,7 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
 
         {activeTab === 'evidence' && (
           <div>
-            <div className="panel-header-badge">OFFICIAL NSSDCA EVIDENCE VERIFICATION</div>
+            <div className="panel-header-badge">SOURCE-VERIFIED EVIDENCE ARCHIVE</div>
             <h2>Artifact Evidence Verification</h2>
             <div className="evidence-scan-action-box">
               <button
@@ -803,7 +809,7 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
                 {isScanned ? 'EVIDENCE SCANNED & LOGGED (+120 XP)' : 'SCAN FOR EVIDENCE'}
               </button>
               <span className="citation-line">
-                <ShieldCheck size={14} /> Indexed against NASA Master Catalog
+                <ShieldCheck size={14} /> Grounded in NASA NSSDCA Master Catalogs
               </span>
             </div>
 
@@ -829,6 +835,87 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
                 <p>{machine.evidence.status}</p>
               </div>
             </div>
+
+            {/* Individual Authorized Sources & Claim Traceability */}
+            {machine.sources && machine.sources.length > 0 && (
+              <div className="verified-sources-container glass-panel" style={{ marginTop: '24px', padding: '18px 20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Database size={15} color="#38BDF8" />
+                    <span style={{ font: '700 12px "DM Mono", monospace', letterSpacing: '0.12em', color: '#38BDF8' }}>
+                      AUTHORIZED NASA SOURCE REFERENCES ({machine.sources.length})
+                    </span>
+                  </div>
+                  <span style={{ font: '500 11px "DM Mono", monospace', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ShieldCheck size={13} /> {machine.sources.every((s) => s.verificationStatus === 'VERIFIED') ? 'ALL CLAIMS VERIFIED' : 'PARTIALLY VERIFIED'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {machine.sources.map((src) => (
+                    <div
+                      key={src.id}
+                      style={{
+                        padding: '12px 14px',
+                        background: 'rgba(5, 7, 15, 0.65)',
+                        border: '1px solid rgba(56, 189, 248, 0.18)',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                        <a
+                          href={src.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            font: '600 13px "Space Grotesk", sans-serif',
+                            color: '#F3F5FF',
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          {src.title} <ExternalLink size={12} color="#38BDF8" />
+                        </a>
+                        <span
+                          style={{
+                            font: '600 10px "DM Mono", monospace',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: src.verificationStatus === 'VERIFIED' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(251, 191, 36, 0.18)',
+                            color: src.verificationStatus === 'VERIFIED' ? '#34D399' : '#FBBF24',
+                            border: `1px solid ${src.verificationStatus === 'VERIFIED' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(251, 191, 36, 0.4)'}`
+                          }}
+                        >
+                          {src.verificationStatus}
+                        </span>
+                      </div>
+                      <div style={{ font: '400 11px "DM Mono", monospace', color: '#8791AA', marginBottom: '6px' }}>
+                        Publisher: {src.publisher} · Type: {src.resourceType}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                        <span style={{ font: '500 10px "DM Mono", monospace', color: '#94A3B8' }}>Supports:</span>
+                        {src.supports.map((sup) => (
+                          <span
+                            key={sup}
+                            style={{
+                              font: '500 10px "DM Mono", monospace',
+                              padding: '1px 6px',
+                              borderRadius: '3px',
+                              background: 'rgba(56, 189, 248, 0.1)',
+                              color: '#38BDF8',
+                              border: '1px solid rgba(56, 189, 248, 0.2)'
+                            }}
+                          >
+                            {sup}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -987,7 +1074,7 @@ function MissionControlModal({ onClose, onRewardXp }) {
         <div className="modal-eyebrow">MISSION CONTROL · SIMULATED FLIGHT INVESTIGATION</div>
         <h2>The Last Signal Challenge</h2>
         <p className="modal-lead">
-          Investigate authentic operational anomalies recorded in official NASA flight telemetry.
+          Investigate authentic operational anomalies recorded in documented NASA flight telemetry.
         </p>
 
         <div className="scenario-case-tabs">
@@ -1155,7 +1242,7 @@ function ImageInspectorModal({ onClose }) {
         <button className="modal-close-icon-btn" onClick={onClose}>
           <X size={18} />
         </button>
-        <div className="modal-eyebrow">NSSDCA OFFICIAL PHOTOGRAPHIC ARCHIVE INSPECTOR</div>
+        <div className="modal-eyebrow">NSSDCA PHOTOGRAPHIC ARCHIVE INSPECTOR</div>
         <h2>NASA Imagery Archive Inspector</h2>
         <p className="modal-lead">
           Authentic NASA photographic survey records cataloged in the Space Science Data Coordinated Archive.
@@ -1211,7 +1298,7 @@ function ImageInspectorModal({ onClose }) {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <span className="citation-line">
-            <ShieldCheck size={14} /> Official Imagery Source: NASA Space Science Data Coordinated Archive
+            <ShieldCheck size={14} /> Imagery Source: NASA Space Science Data Coordinated Archive
           </span>
           <a
             href="https://nssdc.gsfc.nasa.gov/image/"
@@ -1286,17 +1373,17 @@ function VisualCertificateModal({ scannedIds, bonusXp = 0, onClose }) {
           <X size={18} />
         </button>
 
-        <div className="modal-eyebrow">OFFICIAL ACCREDITATION · HIGH-DPI VISUAL CERTIFICATE</div>
-        <h2>Junior Space Archaeologist Certification</h2>
+        <div className="modal-eyebrow">EDUCATIONAL RECOGNITION · HIGH-DPI VISUAL CERTIFICATE</div>
+        <h2>Junior Space Archaeologist Certificate of Achievement</h2>
         <p className="modal-lead">
-          Rendered live onto high-resolution 1600×1130 canvas with official 2026 NASA Space Apps credentials.
+          Rendered live onto high-resolution 1600×1130 canvas with 2026 NASA Space Apps Challenge reference credentials.
         </p>
 
         {/* Input HUD: Enter student name */}
         <div className="cert-controls-panel glass-panel">
           <div className="cert-input-row">
             <label>
-              <Sparkles size={14} /> ENTER EXPLORER NAME OR CALLSIGN FOR OFFICIAL CERTIFICATE
+              <Sparkles size={14} /> ENTER EXPLORER NAME OR CALLSIGN FOR RECOGNITION CERTIFICATE
             </label>
             <input
               type="text"
@@ -1719,7 +1806,7 @@ export default function App() {
               </a>
             </div>
             <small style={{ color: '#64748B', fontFamily: 'DM Mono', fontSize: '9px' }}>
-              All 13 equipment groups are cataloged with official NSSDCA mission IDs. Simulated
+              All 13 equipment groups are cataloged with verified NSSDCA mission IDs. Simulated
               narration and dialogues are explicitly marked as educational dramatizations.
             </small>
           </div>

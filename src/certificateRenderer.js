@@ -104,7 +104,7 @@ export function renderCertificateToCanvas(canvas, data) {
   ctx.font = '10px "DM Mono", monospace';
   ctx.fillStyle = '#64748B';
   ctx.textAlign = 'left';
-  ctx.fillText('// NSSDCA MASTER ARCHIVE REGISTRY // VERIFIED RECORD //', 75, 80);
+  ctx.fillText('// EDUCATIONAL ARCHIVE REGISTRY // SOURCE-REFERENCED RECORD //', 75, 80);
   ctx.textAlign = 'right';
   ctx.fillText('// LAT-LON SURFACE COORDINATES VALIDATED // NASA SPACE APPS //', width - 75, 80);
 
@@ -142,7 +142,7 @@ export function renderCertificateToCanvas(canvas, data) {
   ctx.font = '500 13px "DM Mono", monospace';
   ctx.fillStyle = '#94A3B8';
   ctx.letterSpacing = '0.22em';
-  ctx.fillText('2026 NASA SPACE APPS CHALLENGE • NSSDCA VERIFIED ARCHIVE', centerX, 190);
+  ctx.fillText('2026 NASA SPACE APPS CHALLENGE • SOURCE-REFERENCED ARCHIVE', centerX, 190);
 
   ctx.font = '700 24px "Space Grotesk", sans-serif';
   ctx.fillStyle = '#38BDF8';
@@ -173,7 +173,7 @@ export function renderCertificateToCanvas(canvas, data) {
   // 6. Main Certificate Heading
   ctx.font = '500 13px "DM Mono", monospace';
   ctx.fillStyle = '#FBBF24';
-  ctx.fillText('OFFICIAL DIPLOMA OF RECOGNITION', centerX, 292);
+  ctx.fillText('STUDENT DIPLOMA OF RECOGNITION', centerX, 292);
 
   ctx.font = '700 50px "Space Grotesk", sans-serif';
   ctx.fillStyle = '#FFFFFF';
@@ -184,7 +184,7 @@ export function renderCertificateToCanvas(canvas, data) {
 
   ctx.font = '500 14px "DM Mono", monospace';
   ctx.fillStyle = '#94A3B8';
-  ctx.fillText('THIS CERTIFICATION IS PROUDLY CONFERRED UPON', centerX, 400);
+  ctx.fillText('THIS CERTIFICATE IS PROUDLY CONFERRED UPON', centerX, 400);
 
   // 7. Student Display Name
   const displayName = (name && name.trim()) ? name.trim().toUpperCase() : 'SPACE EXPLORER';
@@ -262,7 +262,7 @@ export function renderCertificateToCanvas(canvas, data) {
     ctx.fillText(subVal, x + w / 2, y + 104);
   };
 
-  drawHudCard(p1X, panelY, panelW, panelH, 'OFFICIAL EXPLORER RANK', rank, 'MERIT CLASSIFICATION', '#38BDF8');
+  drawHudCard(p1X, panelY, panelW, panelH, 'EXPLORER RANK', rank, 'MERIT CLASSIFICATION', '#38BDF8');
   drawHudCard(p2X, panelY, panelW, panelH, 'CATALOGED ARTIFACTS', `${scannedCount} / ${totalCount} DISCOVERED`, 'MOON · MARS · DEEP SPACE', '#FBBF24');
   drawHudCard(p3X, panelY, panelW, panelH, 'RESEARCH MERIT POINTS', `${xp} XP ACCUMULATED`, 'NSSDCA LOCAL RECORD', '#A78BFA');
 
@@ -277,7 +277,7 @@ export function renderCertificateToCanvas(canvas, data) {
   ctx.fillText(`VERIFICATION CODE:  ${verificationCode}`, 100, footerY + 46);
   ctx.fillText('CATALOG CITATION:   NASA NSSDC MASTER CATALOGUE', 100, footerY + 72);
   ctx.fillStyle = '#38BDF8';
-  ctx.fillText('STATUS: VERIFIED & SEALED BY NEBULA X ARCHIVE', 100, footerY + 98);
+  ctx.fillText('STATUS: SOURCE-VERIFIED EDUCATIONAL ARCHIVE', 100, footerY + 98);
 
   // Center Block: Official Gold Seal
   const sealX = centerX;
@@ -325,7 +325,7 @@ export function renderCertificateToCanvas(canvas, data) {
   ctx.textAlign = 'center';
   ctx.font = '700 9px "DM Mono", monospace';
   ctx.fillStyle = '#FBBF24';
-  ctx.fillText('OFFICIAL ARCHIVE SEAL', sealX, sealY + 70);
+  ctx.fillText('EDUCATIONAL ARCHIVE EMBLEM', sealX, sealY + 70);
 
   // Right Block: Official Sign-off
   const sigX = width - 100;
@@ -349,5 +349,5 @@ export function renderCertificateToCanvas(canvas, data) {
 
   ctx.font = '500 11px "DM Mono", monospace';
   ctx.fillStyle = '#64748B';
-  ctx.fillText('NASA SPACE APPS CHALLENGE · NSSDCA VALIDATOR', sigX, footerY + 90);
+  ctx.fillText('2026 NASA SPACE APPS CHALLENGE • INDEPENDENT PROJECT', sigX, footerY + 90);
 }
