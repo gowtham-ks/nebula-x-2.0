@@ -109,6 +109,47 @@ html, body {
   background: radial-gradient(ellipse at 50% 35%, #0b1325 0%, #060914 55%, #030509 100%);
 }
 
+/* =========================================================
+   TYPOGRAPHIC FOUNDATION & ADVANCED TEXT ENGINE
+   ========================================================= */
+
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+  letter-spacing: -0.015em;
+}
+
+p,
+.panel-quote,
+.story-lead,
+.story-desc,
+.modal-lead,
+.transcript-text,
+.guide-q-body p,
+.hero-tagline {
+  text-wrap: pretty;
+}
+
+/* Tabular Numerics for Coordinates, Metrics, XP, Dates & Telemetry */
+.progress-pill b,
+.locations-site-coords,
+.telemetry-hud-status,
+.timeline-step-year,
+.preview-meta-item b,
+.stats-three-cols b,
+.cert-stats-row b,
+.rank-card-banner b,
+.quiz-score-badge,
+.xp-pill,
+.guide-q-num,
+.matrix-row-item b,
+code,
+pre,
+[data-numeric="tabular"] {
+  font-variant-numeric: tabular-nums lining-nums;
+  -webkit-font-feature-settings: "tnum" 1, "lnum" 1;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
 /* Custom Scrollbar for all panels */
 ::-webkit-scrollbar {
   width: 6px;
@@ -1039,6 +1080,7 @@ nav.main-nav button.active {
   line-height: 1.5;
   color: #E2E8F0;
   margin: 0 0 12px;
+  max-width: 65ch;
 }
 
 .story-desc {
@@ -1046,6 +1088,7 @@ nav.main-nav button.active {
   line-height: 1.7;
   color: var(--text-secondary);
   margin: 0 0 20px;
+  max-width: 65ch;
 }
 
 /* Audio Player & Speech Synthesis HUD */
@@ -1249,6 +1292,7 @@ nav.main-nav button.active {
   color: var(--text-secondary);
   margin: 0;
   white-space: pre-line;
+  max-width: 70ch;
 }
 
 /* Tabs & Story Panels */
@@ -1314,6 +1358,7 @@ nav.main-nav button.active {
   line-height: 1.75;
   color: var(--text-secondary);
   margin: 0 0 20px;
+  max-width: 68ch;
 }
 
 /* Notice box for educational dramatizations */
@@ -2041,6 +2086,7 @@ nav.main-nav button.active {
   line-height: 1.6;
   color: var(--text-secondary);
   margin: 0 0 18px;
+  max-width: 62ch;
 }
 
 /* Modal 1: Mission Control / The Last Signal */
