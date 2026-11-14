@@ -1000,6 +1000,8 @@ function FullStoryExperience({
           <img
             src={machine.imageUrl}
             alt={machine.name}
+            loading="lazy"
+            decoding="async"
             onError={(e) => {
               e.target.src =
                 'https://images-assets.nasa.gov/image/as11-40-5922/as11-40-5922~medium.jpg';
@@ -1765,7 +1767,16 @@ export function MissionControlModal({ onClose, onRewardXp }) {
         </div>
 
         <div className="telemetry-viewport-16-9" style={{ maxHeight: '220px', marginBottom: '18px' }}>
-          <img src={currentCase.imageUrl} alt={currentCase.missionName} />
+          <img
+            src={currentCase.imageUrl}
+            alt={currentCase.missionName}
+            loading="lazy"
+            decoding="async"
+            onError={(e) => {
+              e.target.src =
+                'https://images-assets.nasa.gov/image/as11-40-5922/as11-40-5922~medium.jpg';
+            }}
+          />
           <div className="scanline-effect" />
           <div className="telemetry-crosshair-overlay" />
           <div className="telemetry-hud-badge">{currentCase.title}</div>
@@ -1867,7 +1878,16 @@ function CompareModal({ onClose }) {
           {[leftMachine, rightMachine].map((m) => (
             <div key={m.id} className="compare-column-card glass-panel">
               <div className="telemetry-viewport-16-9">
-                <img src={m.imageUrl} alt={m.name} />
+                <img
+                  src={m.imageUrl}
+                  alt={m.name}
+                  loading="lazy"
+                  decoding="async"
+                  onError={(e) => {
+                    e.target.src =
+                      'https://images-assets.nasa.gov/image/as11-40-5922/as11-40-5922~medium.jpg';
+                  }}
+                />
                 <div className="scanline-effect" />
                 <div className="telemetry-crosshair-overlay" />
                 <div className="telemetry-hud-badge">{m.nssdcId}</div>
@@ -1959,7 +1979,13 @@ function ImageInspectorModal({ onClose }) {
             <img
               src={selectedMachine.imageUrl}
               alt={selectedMachine.name}
+              loading="lazy"
+              decoding="async"
               style={{ transform: zoomed ? 'scale(1.5)' : 'scale(1)' }}
+              onError={(e) => {
+                e.target.src =
+                  'https://images-assets.nasa.gov/image/as11-40-5922/as11-40-5922~medium.jpg';
+              }}
             />
             <div className="scanline-effect" />
             <div className="telemetry-crosshair-overlay" />
@@ -2655,6 +2681,8 @@ export default function App() {
               <img
                 src={previewMachine.imageUrl}
                 alt={previewMachine.name}
+                loading="lazy"
+                decoding="async"
                 onError={(e) => {
                   e.target.src =
                     'https://images-assets.nasa.gov/image/as11-40-5922/as11-40-5922~medium.jpg';

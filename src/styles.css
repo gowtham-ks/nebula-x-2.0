@@ -2732,6 +2732,26 @@ textarea:focus-visible {
   .locations-site-card {
     min-height: 44px;
   }
+  .inspector-chip {
+    min-height: 44px;
+    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .prompt-pill {
+    min-height: 44px;
+    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .ask-submit-btn {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+  .cert-action-btn {
+    min-height: 48px;
+    padding: 12px 20px;
+  }
 }
 
 @media (hover: none) {
@@ -2742,12 +2762,23 @@ textarea:focus-visible {
   .modal-close-icon-btn:hover,
   .icon-btn-round:hover,
   .quiz-option-btn:hover,
-  .story-tab-btn:hover {
+  .story-tab-btn:hover,
+  .inspector-chip:hover,
+  .prompt-pill:hover,
+  .cert-action-btn:hover {
     transform: none !important;
   }
   .subheading-btn:active,
   .machine-chip:active,
   .start-btn:active,
+  .quiz-option-btn:active,
+  .mobile-nav-link:active,
+  .prompt-pill:active,
+  .inspector-chip:active,
+  .cert-action-btn:active {
+    opacity: 0.85;
+    background: rgba(56, 189, 248, 0.22);
+  }
   .quiz-option-btn:active,
   .mobile-nav-link:active {
     opacity: 0.85;
@@ -2921,6 +2952,23 @@ textarea:focus-visible {
     border-bottom: none;
     padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px));
     animation: slideUpSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .ask-submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .compare-modal-wide,
+  .inspector-modal-wide {
+    width: 98vw !important;
+    padding: 20px 14px;
+  }
+  .inspector-stage-box {
+    padding: 10px;
+  }
+  .inspector-meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 }
 
