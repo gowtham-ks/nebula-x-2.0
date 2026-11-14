@@ -1023,41 +1023,45 @@ function FullStoryExperience({
               {/* Play / Pause / Resume */}
               {narration.audioState === 'STOPPED' && (
                 <button
+                  type="button"
                   className="audio-play-btn"
                   onClick={narration.play}
                   aria-label="Play Narration Transmission"
                 >
-                  <Play size={15} />
+                  <Play size={14} />
                   <span>PLAY TRANSMISSION</span>
                 </button>
               )}
               {narration.audioState === 'PLAYING' && (
                 <button
+                  type="button"
                   className="audio-play-btn active"
                   onClick={narration.pause}
                   aria-label="Pause Narration"
                 >
-                  <Pause size={15} />
+                  <Pause size={14} />
                   <span>PAUSE</span>
                 </button>
               )}
               {narration.audioState === 'PAUSED' && (
                 <button
+                  type="button"
                   className="audio-play-btn"
                   onClick={narration.resume}
                   aria-label="Resume Narration"
                 >
-                  <Play size={15} />
+                  <Play size={14} />
                   <span>RESUME</span>
                 </button>
               )}
               {narration.audioState === 'MUTED' && (
                 <button
+                  type="button"
                   className="audio-play-btn active"
                   onClick={narration.pause}
                   aria-label="Pause Muted Narration"
                 >
-                  <Pause size={15} />
+                  <Pause size={14} />
                   <span>PAUSE (MUTED)</span>
                 </button>
               )}
@@ -1065,6 +1069,7 @@ function FullStoryExperience({
               {/* Stop Button */}
               {narration.audioState !== 'STOPPED' && (
                 <button
+                  type="button"
                   className="audio-aux-btn"
                   onClick={narration.stop}
                   aria-label="Stop Narration"
@@ -1077,6 +1082,7 @@ function FullStoryExperience({
 
               {/* Replay Button */}
               <button
+                type="button"
                 className="audio-aux-btn"
                 onClick={narration.replay}
                 aria-label="Replay Narration from Start"
@@ -1087,6 +1093,7 @@ function FullStoryExperience({
 
               {/* Mute Button */}
               <button
+                type="button"
                 className={`audio-aux-btn ${narration.isMuted ? 'muted' : ''}`}
                 onClick={narration.toggleMute}
                 aria-label={narration.isMuted ? 'Unmute Audio' : 'Mute Audio'}
@@ -1130,6 +1137,7 @@ function FullStoryExperience({
             {/* Accessible Readable Full Text Transcript Toggle */}
             <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <button
+                type="button"
                 className="transcript-toggle-btn"
                 onClick={() => setShowTranscript((prev) => !prev)}
                 aria-expanded={showTranscript}
@@ -1176,6 +1184,7 @@ function FullStoryExperience({
           ['ask', 'ASK THE EXPLORER']
         ].map(([key, label]) => (
           <button
+            type="button"
             key={key}
             role="tab"
             aria-selected={activeTab === key}
@@ -1197,7 +1206,7 @@ function FullStoryExperience({
             </div>
             <h2>“I am {machine.name}.”</h2>
             <p className="panel-quote">{machine.audioText}</p>
-            <div style={{ margin: '14px 0 20px', padding: '10px 14px', background: 'rgba(5, 7, 15, 0.5)', border: '1px solid rgba(56, 189, 248, 0.15)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: '#8791AA', font: '400 11px "DM Mono", monospace' }}>
+            <div className="educational-notice-box">
               <Info size={14} color="#38BDF8" style={{ flexShrink: 0 }} />
               <span>
                 <strong>Educational Dramatization Notice:</strong> First-person voice memoirs are dramatized for educational engagement. All operational dates, resting locations, coordinates, and scientific achievements are verified against official NASA NSSDCA catalogs.
@@ -1206,35 +1215,25 @@ function FullStoryExperience({
 
             {/* Multi-Location Sites Selector if Machine has multiple physical sites */}
             {machine.locations && machine.locations.length > 1 && (
-              <div className="locations-explorer-strip glass-panel" style={{ marginBottom: '20px', padding: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <div className="locations-explorer-strip glass-panel">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                   <Compass size={15} color="#38BDF8" />
-                  <span style={{ font: '700 12px "DM Mono", monospace', color: '#38BDF8', letterSpacing: '0.1em' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '11px', color: 'var(--lunar-cyan)', letterSpacing: '0.1em' }}>
                     VERIFIED PHYSICAL SITES IN ARCHIVE ({machine.locations.length} DISTINCT LOCATIONS)
                   </span>
                 </div>
-                <div className="locations-pills-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <div className="locations-pills-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                   {machine.locations.map((loc, idx) => (
                     <div
                       key={loc.id || idx}
-                      className="location-site-card glass-panel"
-                      style={{
-                        padding: '10px 14px',
-                        borderRadius: '6px',
-                        border: '1px solid rgba(56, 189, 248, 0.25)',
-                        background: 'rgba(11, 17, 32, 0.85)',
-                        flex: '1 1 calc(33.333% - 12px)',
-                        minWidth: '220px'
-                      }}
+                      className="locations-site-card"
                     >
-                      <b style={{ color: '#F3F5FF', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
-                        {loc.name}
-                      </b>
-                      <div style={{ font: '500 11px "DM Mono", monospace', color: '#38BDF8', marginBottom: '4px' }}>
+                      <b>{loc.name}</b>
+                      <div className="locations-site-coords">
                         {loc.lat >= 0 ? `${loc.lat}° N` : `${Math.abs(loc.lat)}° S`},{' '}
                         {loc.lon >= 0 ? `${loc.lon}° E` : `${Math.abs(loc.lon)}° W`}
                       </div>
-                      <small style={{ color: '#94A3B8', fontSize: '11px', display: 'block' }}>
+                      <small className="locations-site-detail">
                         {loc.siteDetail || loc.siteName || loc.status}
                       </small>
                     </div>
@@ -1410,7 +1409,7 @@ function FullStoryExperience({
                 <span className="citation-line">
                   <ShieldCheck size={14} /> Grounded in NASA NSSDCA Master Catalogs
                 </span>
-                <span style={{ fontSize: '11px', color: '#64748B', fontFamily: 'DM Mono' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-dim)', fontFamily: 'DM Mono' }}>
                   Awards +120 XP once upon scan completion
                 </span>
               </div>
@@ -1454,74 +1453,51 @@ function FullStoryExperience({
             {/* Individual Authorized Sources & Claim Traceability */}
             {machine.sources && machine.sources.length > 0 && (
               <div className="verified-sources-container glass-panel" style={{ marginTop: '24px', padding: '18px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Database size={15} color="#38BDF8" />
-                    <span style={{ font: '700 12px "DM Mono", monospace', letterSpacing: '0.12em', color: '#38BDF8' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '11px', letterSpacing: '0.1em', color: 'var(--lunar-cyan)' }}>
                       AUTHORIZED NASA SOURCE REFERENCES ({machine.sources.length})
                     </span>
                   </div>
-                  <span style={{ font: '500 11px "DM Mono", monospace', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                     <ShieldCheck size={13} /> {machine.sources.every((s) => s.verificationStatus === 'VERIFIED') ? 'ALL CLAIMS VERIFIED' : 'PARTIALLY VERIFIED'}
                   </span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {machine.sources.map((src) => (
-                    <div
-                      key={src.id}
-                      style={{
-                        padding: '12px 14px',
-                        background: 'rgba(5, 7, 15, 0.65)',
-                        border: '1px solid rgba(56, 189, 248, 0.18)',
-                        borderRadius: '8px'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                    <div key={src.id} className="sources-card">
+                      <div className="sources-card-header">
                         <a
                           href={src.url}
                           target="_blank"
                           rel="noreferrer"
-                          style={{
-                            font: '600 13px "Space Grotesk", sans-serif',
-                            color: '#F3F5FF',
-                            textDecoration: 'none',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                          }}
+                          className="sources-card-title"
                         >
                           {src.title} <ExternalLink size={12} color="#38BDF8" />
                         </a>
                         <span
                           style={{
-                            font: '600 10px "DM Mono", monospace',
+                            fontFamily: 'var(--font-mono)',
+                            fontWeight: 600,
+                            fontSize: '10px',
                             padding: '2px 8px',
-                            borderRadius: '4px',
-                            background: src.verificationStatus === 'VERIFIED' ? 'rgba(16, 185, 129, 0.18)' : 'rgba(251, 191, 36, 0.18)',
-                            color: src.verificationStatus === 'VERIFIED' ? '#34D399' : '#FBBF24',
-                            border: `1px solid ${src.verificationStatus === 'VERIFIED' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(251, 191, 36, 0.4)'}`
+                            borderRadius: 'var(--radius-xs)',
+                            background: src.verificationStatus === 'VERIFIED' ? 'var(--telemetry-green-dim)' : 'var(--solar-amber-dim)',
+                            color: src.verificationStatus === 'VERIFIED' ? 'var(--telemetry-green)' : 'var(--solar-amber)',
+                            border: `1px solid ${src.verificationStatus === 'VERIFIED' ? 'var(--telemetry-green-border)' : 'var(--solar-amber-border)'}`
                           }}
                         >
                           {src.verificationStatus}
                         </span>
                       </div>
-                      <div style={{ font: '400 11px "DM Mono", monospace', color: '#8791AA', marginBottom: '6px' }}>
+                      <div className="sources-card-publisher">
                         Publisher: {src.publisher} · Type: {src.resourceType}
                       </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-                        <span style={{ font: '500 10px "DM Mono", monospace', color: '#94A3B8' }}>Supports:</span>
+                      <div className="sources-supports-row">
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-muted)' }}>Supports:</span>
                         {src.supports.map((sup) => (
-                          <span
-                            key={sup}
-                            style={{
-                              font: '500 10px "DM Mono", monospace',
-                              padding: '1px 6px',
-                              borderRadius: '3px',
-                              background: 'rgba(56, 189, 248, 0.1)',
-                              color: '#38BDF8',
-                              border: '1px solid rgba(56, 189, 248, 0.2)'
-                            }}
-                          >
+                          <span key={sup} className="sources-support-tag">
                             {sup}
                           </span>
                         ))}
@@ -1761,16 +1737,16 @@ export function MissionControlModal({ onClose, onRewardXp }) {
   return (
     <div className="modal-backdrop-glass" onClick={onClose}>
       <div className="modal-dialog-box glass-panel" style={{ width: 'min(760px, 95vw)' }} onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-icon-btn" onClick={onClose} aria-label="Close Mission Control">
+        <button type="button" className="modal-close-icon-btn" onClick={onClose} aria-label="Close Mission Control">
           <X size={18} />
         </button>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-          <div className="modal-eyebrow">MISSION CONTROL · SIMULATED FLIGHT INVESTIGATION</div>
-          <div style={{ font: '600 11px "DM Mono", monospace', color: '#10B981' }}>
-            PROGRESS: {quizProgress.completedCaseIds.length}/{cases.length} RESOLVED (+{quizProgress.earnedQuizXp} XP)
+          <div className="modal-eyebrow">MISSION CONTROL · ANOMALY INVESTIGATION</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '11px', color: 'var(--telemetry-green)' }}>
+            DIAGNOSTICS: {quizProgress.completedCaseIds.length}/{cases.length} RESOLVED (+{quizProgress.earnedQuizXp} XP)
           </div>
         </div>
-        <h2>The Last Signal Challenge</h2>
+        <h2>Flight Telemetry Diagnostic Challenge</h2>
         <p className="modal-lead">
           Investigate authentic operational anomalies recorded in documented NASA flight telemetry.
         </p>
@@ -1778,6 +1754,7 @@ export function MissionControlModal({ onClose, onRewardXp }) {
         <div className="scenario-case-tabs">
           {cases.map((c, i) => (
             <button
+              type="button"
               key={c.id}
               className={`scenario-case-btn ${activeCase === i ? 'active' : ''}`}
               onClick={() => setActiveCase(i)}
@@ -1801,6 +1778,7 @@ export function MissionControlModal({ onClose, onRewardXp }) {
         <div className="quiz-options-list">
           {currentCase.options.map((opt, i) => (
             <button
+              type="button"
               key={i}
               className={`quiz-option-btn ${selectedAnswer === i ? (opt.correct ? 'selected' : 'incorrect') : ''}`}
               onClick={() => handleSelectOption(i, opt.correct)}
@@ -1823,6 +1801,7 @@ export function MissionControlModal({ onClose, onRewardXp }) {
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
           <button
+            type="button"
             className="transcript-toggle-btn"
             style={{ color: '#94A3B8', border: '1px solid rgba(148, 163, 184, 0.2)' }}
             onClick={handleResetQuiz}
@@ -1845,7 +1824,7 @@ function CompareModal({ onClose }) {
   return (
     <div className="modal-backdrop-glass" onClick={onClose}>
       <div className="modal-dialog-box glass-panel compare-modal-wide" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-icon-btn" onClick={onClose} aria-label="Close Comparison Lab">
+        <button type="button" className="modal-close-icon-btn" onClick={onClose} aria-label="Close Comparison Lab">
           <X size={18} />
         </button>
         <div className="modal-eyebrow">ARCHIVE ANALYSIS · SIDE-BY-SIDE TELEMETRY LAB</div>
@@ -1946,7 +1925,7 @@ function ImageInspectorModal({ onClose }) {
   return (
     <div className="modal-backdrop-glass" onClick={onClose}>
       <div className="modal-dialog-box glass-panel inspector-modal-wide" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-icon-btn" onClick={onClose} aria-label="Close Image Inspector">
+        <button type="button" className="modal-close-icon-btn" onClick={onClose} aria-label="Close Image Inspector">
           <X size={18} />
         </button>
         <div className="modal-eyebrow">NSSDCA PHOTOGRAPHIC ARCHIVE INSPECTOR</div>
@@ -1958,6 +1937,7 @@ function ImageInspectorModal({ onClose }) {
         <div className="inspector-chips-carousel">
           {machines.map((m) => (
             <button
+              type="button"
               key={m.id}
               className={`inspector-chip ${selectedId === m.id ? 'active' : ''}`}
               onClick={() => {
@@ -1993,6 +1973,7 @@ function ImageInspectorModal({ onClose }) {
               <b>{selectedMachine.place} ({selectedMachine.coordinates})</b>
             </div>
             <button
+              type="button"
               className="prompt-pill"
               onClick={() => setZoomed(!zoomed)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
@@ -2076,7 +2057,7 @@ function VisualCertificateModal({ scannedIds, exploredIds = [], bonusXp = 0, onC
   return (
     <div className="modal-backdrop-glass" onClick={onClose}>
       <div className="modal-dialog-box glass-panel certificate-modal-dialog" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-icon-btn" onClick={onClose} aria-label="Close Certificate Modal">
+        <button type="button" className="modal-close-icon-btn" onClick={onClose} aria-label="Close Certificate Modal">
           <X size={18} />
         </button>
 
@@ -2110,10 +2091,10 @@ function VisualCertificateModal({ scannedIds, exploredIds = [], bonusXp = 0, onC
 
         {/* High-Resolution Export Actions */}
         <div className="cert-actions-grid">
-          <button className="cert-action-btn png" onClick={handleDownloadPNG}>
+          <button type="button" className="cert-action-btn png" onClick={handleDownloadPNG}>
             <Download size={16} /> DOWNLOAD CERTIFICATE (PNG)
           </button>
-          <button className="cert-action-btn pdf" onClick={handlePrintPDF}>
+          <button type="button" className="cert-action-btn pdf" onClick={handlePrintPDF}>
             <Printer size={16} /> PRINT / SAVE AS PDF
           </button>
         </div>
@@ -2146,7 +2127,7 @@ function VisualCertificateModal({ scannedIds, exploredIds = [], bonusXp = 0, onC
                 ) : isExploredItem ? (
                   <Compass size={13} color="#38BDF8" />
                 ) : (
-                  <LockKeyhole size={13} color="#64748B" />
+                  <LockKeyhole size={13} color="var(--text-dim)" />
                 )}
                 <span>{m.name}</span>
                 <small style={{ fontSize: '9px', marginLeft: '4px', opacity: 0.8 }}>
@@ -2217,6 +2198,7 @@ export default function App() {
   const [showCompare, setShowCompare] = useState(false);
   const [showInspector, setShowInspector] = useState(false);
   const [showSources, setShowSources] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // State A: Recording exploration (does NOT award XP or mark scanned)
   const handleExplore = (id) => {
@@ -2255,12 +2237,14 @@ export default function App() {
     setPreviewMachine(null);
     setSelectedLocation(null);
     setHoveredDest(null);
+    setMobileMenuOpen(false);
   };
 
   const handleBackToSolar = () => {
     setCurrentView('solar');
     setPreviewMachine(null);
     setSelectedLocation(null);
+    setMobileMenuOpen(false);
   };
 
   const handleSelectMachineFromPin = (machine, location) => {
@@ -2272,7 +2256,8 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        if (showQuiz) setShowQuiz(false);
+        if (mobileMenuOpen) setMobileMenuOpen(false);
+        else if (showQuiz) setShowQuiz(false);
         else if (showLegacy) setShowLegacy(false);
         else if (showCompare) setShowCompare(false);
         else if (showInspector) setShowInspector(false);
@@ -2283,21 +2268,16 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showQuiz, showLegacy, showCompare, showInspector, showSources, activeStoryMachine, previewMachine]);
+  }, [mobileMenuOpen, showQuiz, showLegacy, showCompare, showInspector, showSources, activeStoryMachine, previewMachine]);
 
   const currentDestMeta = destinationsMeta[currentView];
 
   return (
     <div className="app">
-      <div className="nebula-glow nebula-blue" />
-      <div className="nebula-glow nebula-violet" />
-
       {/* Top Navigation Bar */}
       <header className="topbar">
-        <button className="brand-btn" onClick={handleBackToSolar} aria-label="Nebula X Home">
-          <div className="brand-mark">
-            <span />
-          </div>
+        <button type="button" className="brand-btn" onClick={handleBackToSolar} aria-label="Nebula X Home">
+          <div className="brand-mark" aria-hidden="true" />
           <div className="brand-text">
             <b>NEBULA X</b>
             <small>THE FORGOTTEN SPACE ARCHIVE</small>
@@ -2306,16 +2286,17 @@ export default function App() {
 
         <nav className="main-nav" aria-label="Main Archive Navigation">
           <button
+            type="button"
             className={currentView === 'solar' ? 'active' : ''}
             onClick={handleBackToSolar}
           >
             SOLAR SYSTEM
           </button>
-          <button onClick={() => setShowQuiz(true)}>MISSION CONTROL</button>
-          <button onClick={() => setShowLegacy(true)}>MY LEGACY CAPSULE</button>
-          <button onClick={() => setShowCompare(true)}>COMPARE</button>
-          <button onClick={() => setShowInspector(true)}>IMAGE INSPECTOR</button>
-          <button onClick={() => setShowSources(true)}>SOURCE POLICY</button>
+          <button type="button" onClick={() => setShowQuiz(true)}>MISSION CONTROL</button>
+          <button type="button" onClick={() => setShowLegacy(true)}>MY LEGACY CAPSULE</button>
+          <button type="button" onClick={() => setShowCompare(true)}>COMPARE</button>
+          <button type="button" onClick={() => setShowInspector(true)}>IMAGE INSPECTOR</button>
+          <button type="button" onClick={() => setShowSources(true)}>SOURCE POLICY</button>
         </nav>
 
         <div className="top-right-actions">
@@ -2327,11 +2308,21 @@ export default function App() {
             </div>
           </div>
           <button
+            type="button"
             className="icon-btn-round"
             onClick={() => setShowLegacy(true)}
             aria-label="Open Explorer Profile and Certificate"
           >
             <CircleUserRound size={18} />
+          </button>
+          <button
+            type="button"
+            className="mobile-nav-toggle-btn"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </header>
@@ -2392,22 +2383,23 @@ export default function App() {
 
             <div className="hero-hud-bottom">
               <div className="hud-eyebrow">
-                <span className="pulse-dot" /> ARCHIVE NAVIGATION SYSTEM · ONLINE
+                <span className="pulse-dot" /> ARCHIVAL CATALOG · NASA NSSDCA VALIDATED
               </div>
               <h1>
-                NEBULA X<span>STORIES REMAIN.</span>
+                NEBULA X<span>PLANETARY ARCHAEOLOGY ARCHIVE</span>
               </h1>
               <p className="hero-tagline">
-                Beyond Earth, humanity left behind more than footprints. It left stories.
+                An interactive scientific inventory of historical landing platforms, surface rovers, and deep-space explorers across the solar system.
               </p>
 
               <div className="exploration-flow-box">
                 <button
+                  type="button"
                   className={`start-btn ${started ? 'active' : ''}`}
                   onClick={() => setStarted((prev) => !prev)}
                   aria-expanded={started}
                 >
-                  {started ? 'SELECT A DESTINATION' : 'START EXPLORATION'}
+                  {started ? 'SELECT PLANETARY ARCHIVE' : 'EXPLORE CELESTIAL TARGETS'}
                   <ArrowRight size={16} />
                 </button>
 
@@ -2415,6 +2407,7 @@ export default function App() {
                   <div className="subheadings-rail">
                     {Object.values(destinationsMeta).map((meta) => (
                       <button
+                        type="button"
                         key={meta.id}
                         className={`subheading-btn ${meta.id}`}
                         onMouseEnter={() => setHoveredDest(meta.id)}
@@ -2436,7 +2429,7 @@ export default function App() {
         {currentView !== 'solar' && (
           <>
             <div className="planet-hud-top">
-              <button className="back-btn" onClick={handleBackToSolar} aria-label="Return to Solar System">
+              <button type="button" className="back-btn" onClick={handleBackToSolar} aria-label="Return to Solar System">
                 ← BACK TO SOLAR SYSTEM
               </button>
               <div className="planet-title-badge">
@@ -2477,11 +2470,122 @@ export default function App() {
         )}
       </div>
 
+      {/* MOBILE NAVIGATION DRAWER */}
+      {mobileMenuOpen && (
+        <div
+          className="mobile-nav-drawer-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div
+            className="mobile-nav-drawer glass-panel"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation Menu"
+          >
+            <div className="mobile-nav-header">
+              <div className="brand-text">
+                <b>NEBULA X</b>
+                <small>NAVIGATION ARCHIVE</small>
+              </div>
+              <button
+                type="button"
+                className="icon-btn-round"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close navigation menu"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <nav className="mobile-nav-list" aria-label="Mobile Archive Navigation">
+              <button
+                type="button"
+                className={`mobile-nav-link ${currentView === 'solar' ? 'active' : ''}`}
+                onClick={() => {
+                  handleBackToSolar();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Compass size={18} />
+                <span>SOLAR SYSTEM</span>
+              </button>
+              <button
+                type="button"
+                className="mobile-nav-link"
+                onClick={() => {
+                  setShowQuiz(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Trophy size={18} />
+                <span>MISSION CONTROL</span>
+              </button>
+              <button
+                type="button"
+                className="mobile-nav-link"
+                onClick={() => {
+                  setShowLegacy(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <GraduationCap size={18} />
+                <span>MY LEGACY CAPSULE</span>
+              </button>
+              <button
+                type="button"
+                className="mobile-nav-link"
+                onClick={() => {
+                  setShowCompare(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <RotateCcw size={18} />
+                <span>COMPARE</span>
+              </button>
+              <button
+                type="button"
+                className="mobile-nav-link"
+                onClick={() => {
+                  setShowInspector(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Search size={18} />
+                <span>IMAGE INSPECTOR</span>
+              </button>
+              <button
+                type="button"
+                className="mobile-nav-link"
+                onClick={() => {
+                  setShowSources(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <ShieldCheck size={18} />
+                <span>SOURCE POLICY</span>
+              </button>
+            </nav>
+
+            <div className="mobile-nav-footer">
+              <div className="progress-pill full-width">
+                <span>ARCHIVE PROGRESS</span>
+                <b>{scannedIds.length}/13 SCANNED</b>
+                <div className="progress-bar-inline">
+                  <i style={{ width: `${(scannedIds.length / 13) * 100}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating Glassmorphic Machine Preview Card */}
       {previewMachine && !activeStoryMachine && (
         <div className="machine-preview-overlay">
           <div className="machine-preview-card glass-panel">
             <button
+              type="button"
               className="close-preview-btn"
               onClick={() => {
                 setPreviewMachine(null);
@@ -2519,17 +2623,17 @@ export default function App() {
 
             {/* If machine has multiple verified sites, show clickable pill list */}
             {previewMachine.locations && previewMachine.locations.length > 1 && (
-              <div className="preview-sites-row" style={{ margin: '8px 0 14px' }}>
-                <small style={{ color: '#38BDF8', fontFamily: 'DM Mono', fontSize: '10px', display: 'block', marginBottom: '4px' }}>
+              <div className="preview-sites-row">
+                <small>
                   VERIFIED LANDING SITES ({previewMachine.locations.length}):
                 </small>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {previewMachine.locations.map((loc) => (
                     <button
+                      type="button"
                       key={loc.id || loc.name}
                       onClick={() => setSelectedLocation(loc)}
                       className={`prompt-pill ${selectedLocation?.id === loc.id ? 'active' : ''}`}
-                      style={{ fontSize: '10px', padding: '3px 8px' }}
                     >
                       {loc.name.split('·')[0].trim()}
                     </button>
@@ -2551,6 +2655,7 @@ export default function App() {
 
             {/* State A Exploration Trigger: Opens Story and marks explored, does NOT award scan XP */}
             <button
+              type="button"
               className="explore-machine-btn"
               onClick={() => {
                 setActiveStoryMachine(previewMachine);
@@ -2605,7 +2710,7 @@ export default function App() {
       {showSources && (
         <div className="modal-backdrop-glass" onClick={() => setShowSources(false)}>
           <div className="modal-dialog-box glass-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-icon-btn" onClick={() => setShowSources(false)} aria-label="Close Source Policy">
+            <button type="button" className="modal-close-icon-btn" onClick={() => setShowSources(false)} aria-label="Close Source Policy">
               <X size={18} />
             </button>
             <div className="modal-eyebrow">ARCHIVE INTEGRITY & CITATION POLICY</div>
@@ -2636,7 +2741,7 @@ export default function App() {
                 <span>2026 Challenge Resource Guidelines</span>
               </a>
             </div>
-            <small style={{ color: '#64748B', fontFamily: 'DM Mono', fontSize: '9px' }}>
+            <small style={{ color: 'var(--text-dim)', fontFamily: 'DM Mono', fontSize: '9px' }}>
               All 13 equipment groups are cataloged with verified NSSDCA mission IDs. Simulated
               narration and dialogues are explicitly marked as educational dramatizations.
             </small>
