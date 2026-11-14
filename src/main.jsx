@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars, Html, Line } from '@react-three/drei';
@@ -6,13 +6,18 @@ import * as THREE from 'three';
 import {
   ArrowRight,
   BookOpen,
+  Check,
+  CheckCircle2,
   ChevronRight,
   CircleUserRound,
   Compass,
   Database,
   Download,
   ExternalLink,
+  FileText,
+  GraduationCap,
   Headphones,
+  HelpCircle,
   Info,
   LockKeyhole,
   Menu,
@@ -20,12 +25,14 @@ import {
   Play,
   Printer,
   Radio,
+  RotateCcw,
   Search,
   Send,
   ShieldCheck,
   Sparkles,
   Trophy,
   Volume2,
+  VolumeX,
   X,
   Zap,
   ZoomIn,
@@ -42,15 +49,43 @@ import {
   createErosTexture
 } from './textures.js';
 import { renderCertificateToCanvas } from './certificateRenderer.js';
+import { latLonToVector3 } from './coords.js';
+export { latLonToVector3 };
 
-// Convert Latitude and Longitude to Cartesian 3D coordinates on a sphere of radius R
-export function latLonToVector3(lat, lon, radius = 1) {
-  const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lon + 180) * (Math.PI / 180);
-  const x = -(radius * Math.sin(phi) * Math.cos(theta));
-  const z = radius * Math.sin(phi) * Math.sin(theta);
-  const y = radius * Math.cos(phi);
-  return [x, y, z];
+// ==========================================
+// CONTENT CLASSIFICATION BADGE COMPONENT
+// ==========================================
+export function ContentClassificationBadge({ type, style }) {
+  if (type === 'DOCUMENTED FACT') {
+    return (
+      <span className="content-badge documented-fact" style={style}>
+        <ShieldCheck size={11} />
+        <span>DOCUMENTED FACT</span>
+      </span>
+    );
+  }
+  if (type === 'SCIENTIFIC INTERPRETATION') {
+    return (
+      <span className="content-badge scientific-interpretation" style={style}>
+        <Sparkles size={11} />
+        <span>SCIENTIFIC INTERPRETATION</span>
+      </span>
+    );
+  }
+  if (type === 'EDUCATIONAL DRAMATIZATION') {
+    return (
+      <span className="content-badge educational-dramatization" style={style}>
+        <BookOpen size={11} />
+        <span>EDUCATIONAL DRAMATIZATION</span>
+      </span>
+    );
+  }
+  return (
+    <span className="content-badge unverified-claim" style={style}>
+      <Info size={11} />
+      <span>{type || 'DOCUMENTED FACT'}</span>
+    </span>
+  );
 }
 
 // ==========================================
@@ -302,13 +337,22 @@ function SolarSystemScene({ hoveredDest, onHoverDest, onSelectDest }) {
 }
 
 // ==========================================
-// DEDICATED PLANETARY CLOSE-UP 3D SCENES
+// DEDICATED PLANETARY CLOSE-UP 3D SCENES WITH MULTI-LOCATION PINS
 // ==========================================
 
-function MachinePin({ machine, active, hovered, onHover, onClick, radius = 1.25 }) {
+// Multi-location pinpoint on 3D globes
+function LocationPin({
+  machine,
+  location,
+  active,
+  hovered,
+  onHover,
+  onClick,
+  radius = 1.25
+}) {
   const pos = useMemo(() => {
-    return latLonToVector3(machine.lat, machine.lon, radius * 1.04);
-  }, [machine.lat, machine.lon, radius]);
+    return latLonToVector3(location.lat, location.lon, radius * 1.035);
+  }, [location.lat, location.lon, radius]);
 
   const pinColor =
     machine.destination === 'moon'
@@ -326,33 +370,39 @@ function MachinePin({ machine, active, hovered, onHover, onClick, radius = 1.25 
     }
   });
 
+  const pinId = location.id || `${machine.id}-${location.name}`;
+
   return (
     <group
       position={pos}
       onClick={(e) => {
         e.stopPropagation();
-        onClick(machine);
+        onClick(machine, location);
       }}
       onPointerOver={(e) => {
         e.stopPropagation();
-        onHover(machine.id);
+        onHover(pinId);
       }}
       onPointerOut={() => onHover(null)}
     >
       <mesh>
-        <sphereGeometry args={[0.042, 16, 16]} />
+        <sphereGeometry args={[0.038, 16, 16]} />
         <meshBasicMaterial color="#FFFFFF" />
       </mesh>
       <mesh ref={pulseRef} scale={hovered || active ? 2.2 : 1.3}>
-        <sphereGeometry args={[0.062, 16, 16]} />
-        <meshBasicMaterial color={pinColor} transparent opacity={hovered || active ? 0.75 : 0.4} />
+        <sphereGeometry args={[0.055, 16, 16]} />
+        <meshBasicMaterial color={pinColor} transparent opacity={hovered || active ? 0.8 : 0.45} />
       </mesh>
       {(hovered || active) && (
-        <Html distanceFactor={5} position={[0, 0.14, 0]}>
+        <Html distanceFactor={5.2} position={[0, 0.14, 0]}>
           <div className="planet-machine-pointer-tooltip" style={{ borderColor: pinColor }}>
             <span style={{ color: pinColor }}>●</span>
-            <b>{machine.name}</b>
-            <span>{machine.tag}</span>
+            <b>{location.name || machine.name}</b>
+            <span>{location.siteDetail || location.siteName || machine.place}</span>
+            <small style={{ color: '#94A3B8', fontSize: '9px' }}>
+              {location.lat >= 0 ? `${location.lat}°N` : `${Math.abs(location.lat)}°S`},{' '}
+              {location.lon >= 0 ? `${location.lon}°E` : `${Math.abs(location.lon)}°W`}
+            </small>
           </div>
         </Html>
       )}
@@ -360,15 +410,32 @@ function MachinePin({ machine, active, hovered, onHover, onClick, radius = 1.25 
   );
 }
 
-function MoonGlobeScene({ onSelectMachine, hoveredMachine, onHoverMachine, previewMachine }) {
+function MoonGlobeScene({ onSelectMachine, hoveredPin, onHoverPin, previewMachine, selectedLocation }) {
   const moonTexture = useMemo(() => createMoonTexture(), []);
   const moonRef = useRef();
 
   useFrame((_, delta) => {
-    if (moonRef.current) moonRef.current.rotation.y += delta * 0.025;
+    if (moonRef.current) moonRef.current.rotation.y += delta * 0.02;
   });
 
-  const moonMachines = useMemo(() => machines.filter((m) => m.destination === 'moon'), []);
+  const moonPins = useMemo(() => {
+    const list = [];
+    machines
+      .filter((m) => m.destination === 'moon')
+      .forEach((m) => {
+        const locs = m.locations && m.locations.length > 0 ? m.locations : [{
+          id: `${m.id}-loc-0`,
+          name: m.name,
+          lat: m.lat,
+          lon: m.lon,
+          siteDetail: m.place
+        }];
+        locs.forEach((loc) => {
+          list.push({ machine: m, location: loc });
+        });
+      });
+    return list;
+  }, []);
 
   return (
     <>
@@ -383,31 +450,53 @@ function MoonGlobeScene({ onSelectMachine, hoveredMachine, onHoverMachine, previ
           <sphereGeometry args={[1.25, 64, 64]} />
           <meshStandardMaterial map={moonTexture} roughness={0.92} />
         </mesh>
-        {moonMachines.map((m) => (
-          <MachinePin
-            key={m.id}
-            machine={m}
-            active={previewMachine?.id === m.id}
-            hovered={hoveredMachine === m.id}
-            onHover={onHoverMachine}
-            onClick={onSelectMachine}
-            radius={1.25}
-          />
-        ))}
+        {moonPins.map(({ machine, location }) => {
+          const pinId = location.id || `${machine.id}-${location.name}`;
+          const isPinActive = previewMachine?.id === machine.id && (!selectedLocation || selectedLocation.id === location.id);
+          return (
+            <LocationPin
+              key={pinId}
+              machine={machine}
+              location={location}
+              active={isPinActive}
+              hovered={hoveredPin === pinId}
+              onHover={onHoverPin}
+              onClick={onSelectMachine}
+              radius={1.25}
+            />
+          );
+        })}
       </group>
     </>
   );
 }
 
-function MarsGlobeScene({ onSelectMachine, hoveredMachine, onHoverMachine, previewMachine }) {
+function MarsGlobeScene({ onSelectMachine, hoveredPin, onHoverPin, previewMachine, selectedLocation }) {
   const marsTexture = useMemo(() => createMarsTexture(), []);
   const marsRef = useRef();
 
   useFrame((_, delta) => {
-    if (marsRef.current) marsRef.current.rotation.y += delta * 0.025;
+    if (marsRef.current) marsRef.current.rotation.y += delta * 0.02;
   });
 
-  const marsMachines = useMemo(() => machines.filter((m) => m.destination === 'mars'), []);
+  const marsPins = useMemo(() => {
+    const list = [];
+    machines
+      .filter((m) => m.destination === 'mars')
+      .forEach((m) => {
+        const locs = m.locations && m.locations.length > 0 ? m.locations : [{
+          id: `${m.id}-loc-0`,
+          name: m.name,
+          lat: m.lat,
+          lon: m.lon,
+          siteDetail: m.place
+        }];
+        locs.forEach((loc) => {
+          list.push({ machine: m, location: loc });
+        });
+      });
+    return list;
+  }, []);
 
   return (
     <>
@@ -422,23 +511,28 @@ function MarsGlobeScene({ onSelectMachine, hoveredMachine, onHoverMachine, previ
           <sphereGeometry args={[1.35, 64, 64]} />
           <meshStandardMaterial map={marsTexture} roughness={0.88} />
         </mesh>
-        {marsMachines.map((m) => (
-          <MachinePin
-            key={m.id}
-            machine={m}
-            active={previewMachine?.id === m.id}
-            hovered={hoveredMachine === m.id}
-            onHover={onHoverMachine}
-            onClick={onSelectMachine}
-            radius={1.35}
-          />
-        ))}
+        {marsPins.map(({ machine, location }) => {
+          const pinId = location.id || `${machine.id}-${location.name}`;
+          const isPinActive = previewMachine?.id === machine.id && (!selectedLocation || selectedLocation.id === location.id);
+          return (
+            <LocationPin
+              key={pinId}
+              machine={machine}
+              location={location}
+              active={isPinActive}
+              hovered={hoveredPin === pinId}
+              onHover={onHoverPin}
+              onClick={onSelectMachine}
+              radius={1.35}
+            />
+          );
+        })}
       </group>
     </>
   );
 }
 
-function DeepSpaceScene({ onSelectMachine, hoveredMachine, onHoverMachine, previewMachine }) {
+function DeepSpaceScene({ onSelectMachine, hoveredPin, onHoverPin, previewMachine, selectedLocation }) {
   const ceresTexture = useMemo(() => createCeresTexture(), []);
   const erosTexture = useMemo(() => createErosTexture(), []);
   const ceresRef = useRef();
@@ -463,6 +557,15 @@ function DeepSpaceScene({ onSelectMachine, hoveredMachine, onHoverMachine, previ
     return pts;
   }, []);
 
+  const pioneer11Points = useMemo(() => {
+    const pts = [];
+    for (let i = 0; i <= 40; i++) {
+      const t = i / 40;
+      pts.push(new THREE.Vector3(-t * 6 + 1, Math.cos(t * 1.8) * 2.2, -t * 5.5));
+    }
+    return pts;
+  }, []);
+
   const keplerOrbitPoints = useMemo(() => {
     const pts = [];
     for (let i = 0; i <= 60; i++) {
@@ -472,6 +575,41 @@ function DeepSpaceScene({ onSelectMachine, hoveredMachine, onHoverMachine, previ
     return pts;
   }, []);
 
+  // Multi-location pins for deep space (Pioneer 10 & 11 separate vectors)
+  const deepPins = useMemo(() => {
+    const list = [];
+    deepMachines.forEach((m) => {
+      if (m.id === 'pioneer') {
+        list.push({
+          machine: m,
+          location: m.locations?.[0] || { name: 'Pioneer 10 · Aldebaran Vector' },
+          pos: [4.6, 1.5, -4.2],
+          pinId: 'pioneer-10-trajectory',
+          label: 'Pioneer 10',
+          detail: 'Interstellar Vector · Taurus / Aldebaran'
+        });
+        list.push({
+          machine: m,
+          location: m.locations?.[1] || { name: 'Pioneer 11 · Aquila Vector' },
+          pos: [-4.2, 2.2, -5.5],
+          pinId: 'pioneer-11-trajectory',
+          label: 'Pioneer 11',
+          detail: 'Interstellar Vector · Aquila Constellation'
+        });
+      } else {
+        list.push({
+          machine: m,
+          location: m.locations?.[0] || { name: m.name },
+          pos: m.spacePos || [0, 0, 0],
+          pinId: m.id,
+          label: m.name,
+          detail: m.place
+        });
+      }
+    });
+    return list;
+  }, [deepMachines]);
+
   return (
     <>
       <color attach="background" args={['#05070F']} />
@@ -480,6 +618,7 @@ function DeepSpaceScene({ onSelectMachine, hoveredMachine, onHoverMachine, previ
       <Stars radius={90} depth={45} count={4000} factor={3} fade speed={0.4} />
 
       <Line points={pioneer10Points} color="#A78BFA" transparent opacity={0.4} lineWidth={1.5} />
+      <Line points={pioneer11Points} color="#38BDF8" transparent opacity={0.35} lineWidth={1.5} />
       <Line points={keplerOrbitPoints} color="#38BDF8" transparent opacity={0.3} lineWidth={1} />
 
       <group position={[2.8, 0.4, -0.8]}>
@@ -496,22 +635,22 @@ function DeepSpaceScene({ onSelectMachine, hoveredMachine, onHoverMachine, previ
         </mesh>
       </group>
 
-      {deepMachines.map((m) => {
-        const isHovered = hoveredMachine === m.id;
-        const isActive = previewMachine?.id === m.id;
+      {deepPins.map((item) => {
+        const isHovered = hoveredPin === item.pinId;
+        const isActive = previewMachine?.id === item.machine.id;
         return (
           <group
-            key={m.id}
-            position={m.spacePos}
+            key={item.pinId}
+            position={item.pos}
             onClick={(e) => {
               e.stopPropagation();
-              onSelectMachine(m);
+              onSelectMachine(item.machine, item.location);
             }}
             onPointerOver={(e) => {
               e.stopPropagation();
-              onHoverMachine(m.id);
+              onHoverPin(item.pinId);
             }}
-            onPointerOut={() => onHoverMachine(null)}
+            onPointerOut={() => onHoverPin(null)}
           >
             <mesh>
               <sphereGeometry args={[0.07, 16, 16]} />
@@ -525,8 +664,8 @@ function DeepSpaceScene({ onSelectMachine, hoveredMachine, onHoverMachine, previ
               <Html distanceFactor={7} position={[0, 0.22, 0]}>
                 <div className="planet-machine-pointer-tooltip" style={{ borderColor: '#A78BFA' }}>
                   <span style={{ color: '#A78BFA' }}>●</span>
-                  <b>{m.name}</b>
-                  <span>{m.tag}</span>
+                  <b>{item.label}</b>
+                  <span>{item.detail}</span>
                 </div>
               </Html>
             )}
@@ -567,97 +706,232 @@ function CameraFlightController({ view }) {
 }
 
 // ==========================================
-// AUDIO & WEB SPEECH SYNTHESIS HOOK
+// AUDIO & WEB SPEECH SYNTHESIS ENGINE (PHASE 2)
 // ==========================================
 
-function useSpaceAudio(machine) {
-  const [playing, setPlaying] = useState(false);
+export function useSpaceAudio(machine) {
+  const [audioState, setAudioState] = useState('STOPPED'); // 'STOPPED' | 'PLAYING' | 'PAUSED' | 'MUTED'
   const [rate, setRate] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
   const [subtitle, setSubtitle] = useState('');
+
   const audioCtxRef = useRef(null);
   const oscRef = useRef(null);
   const gainRef = useRef(null);
+  const utteranceRef = useRef(null);
 
-  const stop = () => {
-    if (window.speechSynthesis) {
+  // Stop background oscillator and Web Audio context cleanly
+  const stopWebAudio = useCallback(() => {
+    try {
+      if (gainRef.current && audioCtxRef.current) {
+        gainRef.current.gain.linearRampToValueAtTime(0.0001, audioCtxRef.current.currentTime + 0.1);
+      }
+      setTimeout(() => {
+        try {
+          oscRef.current?.stop?.();
+          oscRef.current?.disconnect?.();
+          oscRef.current = null;
+        } catch {
+          // ignore
+        }
+      }, 120);
+    } catch {
+      // Audio context cleanup fallback
+    }
+  }, []);
+
+  // Full stop: cancel speech synthesis and kill audio context nodes
+  const stop = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-    setPlaying(false);
+    stopWebAudio();
+    setAudioState('STOPPED');
     setSubtitle('');
+  }, [stopWebAudio]);
 
-    if (gainRef.current && audioCtxRef.current) {
-      gainRef.current.gain.exponentialRampToValueAtTime(
-        0.0001,
-        audioCtxRef.current.currentTime + 0.2
-      );
-      setTimeout(() => {
+  // Start background ambient drone with controlled volume
+  const startWebAudio = useCallback(() => {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioContextClass();
+      }
+
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      // Recreate oscillator node
+      try {
         oscRef.current?.stop?.();
-        oscRef.current = null;
-      }, 250);
-    }
-  };
+        oscRef.current?.disconnect?.();
+      } catch {
+        // ignore
+      }
 
-  const play = () => {
-    stop();
-    if (!machine || !window.speechSynthesis) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = machine?.destination === 'mars' ? 55 : machine?.destination === 'moon' ? 62 : 48;
+      gain.gain.value = 0.0001;
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      const targetGain = isMuted ? 0.00001 : 0.015;
+      gain.gain.exponentialRampToValueAtTime(targetGain, ctx.currentTime + 0.3);
+      osc.start();
+
+      oscRef.current = osc;
+      gainRef.current = gain;
+    } catch {
+      // Audio context initialization fallback
+    }
+  }, [machine?.destination, isMuted]);
+
+  // Play narration with SpeechSynthesis
+  const play = useCallback(() => {
+    if (!machine || typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    // Reset ongoing speech
+    window.speechSynthesis.cancel();
+    stopWebAudio();
 
     const utterance = new SpeechSynthesisUtterance(machine.audioText);
     utterance.rate = rate;
     utterance.pitch = 0.95;
-    utterance.volume = 1;
+    utterance.volume = isMuted ? 0 : 1;
 
     utterance.onstart = () => {
-      setPlaying(true);
+      setAudioState(isMuted ? 'MUTED' : 'PLAYING');
       setSubtitle(machine.audioText);
     };
 
     utterance.onend = () => {
-      setPlaying(false);
+      setAudioState('STOPPED');
       setSubtitle('');
+      stopWebAudio();
     };
 
     utterance.onerror = () => {
-      setPlaying(false);
+      setAudioState('STOPPED');
       setSubtitle('');
+      stopWebAudio();
     };
 
+    utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
+    startWebAudio();
+  }, [machine, rate, isMuted, startWebAudio, stopWebAudio]);
 
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        const ctx = new AudioContextClass();
-        audioCtxRef.current = ctx;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = machine.destination === 'mars' ? 55 : 62;
-        gain.gain.value = 0.0001;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        gain.gain.exponentialRampToValueAtTime(0.015, ctx.currentTime + 0.4);
-        osc.start();
-        oscRef.current = osc;
-        gainRef.current = gain;
+  // Pause speech synthesis and mute drone
+  const pause = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
       }
-    } catch {
-      // Audio context fallback
     }
-  };
+    if (gainRef.current && audioCtxRef.current) {
+      gainRef.current.gain.linearRampToValueAtTime(0.00001, audioCtxRef.current.currentTime + 0.1);
+    }
+    setAudioState('PAUSED');
+  }, []);
 
+  // Resume paused narration
+  const resume = useCallback(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      } else {
+        // If synthesis wasn't merely paused, restart
+        play();
+        return;
+      }
+    }
+    if (gainRef.current && audioCtxRef.current) {
+      const targetGain = isMuted ? 0.00001 : 0.015;
+      gainRef.current.gain.exponentialRampToValueAtTime(targetGain, audioCtxRef.current.currentTime + 0.2);
+    }
+    setAudioState(isMuted ? 'MUTED' : 'PLAYING');
+  }, [isMuted, play]);
+
+  // Replay from beginning
+  const replay = useCallback(() => {
+    stop();
+    setTimeout(() => {
+      play();
+    }, 50);
+  }, [stop, play]);
+
+  // Toggle Mute
+  const toggleMute = useCallback(() => {
+    setIsMuted((prev) => {
+      const next = !prev;
+      if (gainRef.current && audioCtxRef.current) {
+        const targetGain = next ? 0.00001 : 0.015;
+        gainRef.current.gain.setValueAtTime(targetGain, audioCtxRef.current.currentTime);
+      }
+      if (audioState === 'PLAYING' && next) {
+        setAudioState('MUTED');
+      } else if (audioState === 'MUTED' && !next) {
+        setAudioState('PLAYING');
+      }
+      return next;
+    });
+  }, [audioState]);
+
+  // Cleanup on unmount or machine change
   useEffect(() => {
-    return () => stop();
-  }, [machine?.id]);
+    return () => {
+      stop();
+      try {
+        if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+          audioCtxRef.current.close();
+        }
+      } catch {
+        // ignore
+      }
+    };
+  }, [machine?.id, stop]);
 
-  return { playing, play, stop, rate, setRate, subtitle };
+  return {
+    audioState, // 'STOPPED' | 'PLAYING' | 'PAUSED' | 'MUTED'
+    playing: audioState === 'PLAYING' || audioState === 'MUTED',
+    paused: audioState === 'PAUSED',
+    isMuted,
+    play,
+    pause,
+    resume,
+    stop,
+    replay,
+    toggleMute,
+    rate,
+    setRate,
+    subtitle
+  };
 }
 
 // ==========================================
-// FULL EXPLORATION & STORY EXPERIENCE (STEP 5)
+// FULL EXPLORATION & STORY EXPERIENCE (PHASE 2 & 3)
 // ==========================================
 
-function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
+function FullStoryExperience({
+  machine,
+  selectedLocation,
+  onBack,
+  onScan,
+  isScanned,
+  isExplored
+}) {
   const [activeTab, setActiveTab] = useState('story');
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [isScanningInteractive, setIsScanningInteractive] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+
   const narration = useSpaceAudio(machine);
   const [askQuery, setAskQuery] = useState('');
   const [askAnswer, setAskAnswer] = useState(null);
@@ -672,15 +946,52 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
     });
   };
 
+  // Interactive Evidence Scan Action (State B)
+  const handlePerformEvidenceScan = () => {
+    if (isScanned) return;
+    setIsScanningInteractive(true);
+    setScanProgress(10);
+
+    const interval = setInterval(() => {
+      setScanProgress((prev) => {
+        if (prev >= 95) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsScanningInteractive(false);
+            setScanProgress(100);
+            onScan(machine.id);
+          }, 350);
+          return 100;
+        }
+        return prev + 25;
+      });
+    }, 220);
+  };
+
+  const currentLocation = selectedLocation || machine.locations?.[0] || {
+    name: machine.place,
+    coordinates: machine.coordinates,
+    siteDetail: machine.place
+  };
+
   return (
     <div className="full-story-view">
       <div className="story-header-nav">
-        <button className="back-btn" onClick={onBack}>
+        <button className="back-btn" onClick={onBack} aria-label="Return to Planetary View">
           ← RETURN TO PLANETARY VIEW
         </button>
-        <div className="progress-pill">
-          <span>CATALOG STATUS</span>
-          <b>{machine.tag}</b>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="target-audience-pill">
+            <GraduationCap size={13} color="#38BDF8" />
+            <span>AGES 13–18 · SECONDARY EDUCATION</span>
+          </div>
+          <div className="progress-pill">
+            <span>CATALOG STATUS</span>
+            <b>{machine.tag}</b>
+          </div>
+          <div className={`status-pill ${isScanned ? 'scanned' : isExplored ? 'explored' : 'pending'}`}>
+            <span>{isScanned ? '● EVIDENCE SCANNED' : isExplored ? '○ ARCHIVE EXPLORED' : '○ UNEXPLORED'}</span>
+          </div>
         </div>
       </div>
 
@@ -701,23 +1012,92 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
         </div>
 
         <div className="story-intro-content">
-          <div className="eyebrow">{machine.place}</div>
+          <div className="eyebrow">{currentLocation.name || machine.place}</div>
           <h1>{machine.name}</h1>
           <p className="story-lead">“{machine.lead}”</p>
           <p className="story-desc">{machine.desc}</p>
 
+          {/* Audio Controls Suite with Lifecycle Management */}
           <div className="narration-deck glass-panel">
             <div className="narration-controls-row">
+              {/* Play / Pause / Resume */}
+              {narration.audioState === 'STOPPED' && (
+                <button
+                  className="audio-play-btn"
+                  onClick={narration.play}
+                  aria-label="Play Narration Transmission"
+                >
+                  <Play size={15} />
+                  <span>PLAY TRANSMISSION</span>
+                </button>
+              )}
+              {narration.audioState === 'PLAYING' && (
+                <button
+                  className="audio-play-btn active"
+                  onClick={narration.pause}
+                  aria-label="Pause Narration"
+                >
+                  <Pause size={15} />
+                  <span>PAUSE</span>
+                </button>
+              )}
+              {narration.audioState === 'PAUSED' && (
+                <button
+                  className="audio-play-btn"
+                  onClick={narration.resume}
+                  aria-label="Resume Narration"
+                >
+                  <Play size={15} />
+                  <span>RESUME</span>
+                </button>
+              )}
+              {narration.audioState === 'MUTED' && (
+                <button
+                  className="audio-play-btn active"
+                  onClick={narration.pause}
+                  aria-label="Pause Muted Narration"
+                >
+                  <Pause size={15} />
+                  <span>PAUSE (MUTED)</span>
+                </button>
+              )}
+
+              {/* Stop Button */}
+              {narration.audioState !== 'STOPPED' && (
+                <button
+                  className="audio-aux-btn"
+                  onClick={narration.stop}
+                  aria-label="Stop Narration"
+                  title="Stop Transmission"
+                >
+                  <X size={14} />
+                  <span>STOP</span>
+                </button>
+              )}
+
+              {/* Replay Button */}
               <button
-                className="audio-play-btn"
-                onClick={narration.playing ? narration.stop : narration.play}
+                className="audio-aux-btn"
+                onClick={narration.replay}
+                aria-label="Replay Narration from Start"
+                title="Replay from Beginning"
               >
-                {narration.playing ? <Pause size={15} /> : <Volume2 size={15} />}
-                {narration.playing ? 'PAUSE NARRATION' : 'LISTEN TO TRANSMISSION'}
+                <RotateCcw size={14} />
               </button>
 
+              {/* Mute Button */}
+              <button
+                className={`audio-aux-btn ${narration.isMuted ? 'muted' : ''}`}
+                onClick={narration.toggleMute}
+                aria-label={narration.isMuted ? 'Unmute Audio' : 'Mute Audio'}
+                title={narration.isMuted ? 'Unmute' : 'Mute Drone'}
+              >
+                {narration.isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              </button>
+
+              {/* Rate Adjustment */}
               <div className="audio-speed-control">
-                <span>RATE</span>
+                <span>SPEED</span>
                 <input
                   type="range"
                   min="0.8"
@@ -725,11 +1105,13 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
                   step="0.05"
                   value={narration.rate}
                   onChange={(e) => narration.setRate(parseFloat(e.target.value))}
+                  aria-label="Playback Speed"
                 />
                 <b>{narration.rate.toFixed(2)}×</b>
               </div>
 
-              <div className={`audio-live-bars ${narration.playing ? 'active' : ''}`}>
+              {/* Live Audio Visualizer Bars */}
+              <div className={`audio-live-bars ${narration.playing && !narration.isMuted ? 'active' : ''}`}>
                 <i />
                 <i />
                 <i />
@@ -737,8 +1119,42 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
               </div>
             </div>
 
+            {/* Audio State Indicator & Live Captions */}
             {narration.subtitle && (
-              <div className="story-subtitle-banner">“{narration.subtitle}”</div>
+              <div className="story-subtitle-banner" role="status" aria-live="polite">
+                <small className="caption-tag">LIVE CAPTION</small>
+                <span>“{narration.subtitle}”</span>
+              </div>
+            )}
+
+            {/* Accessible Readable Full Text Transcript Toggle */}
+            <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <button
+                className="transcript-toggle-btn"
+                onClick={() => setShowTranscript((prev) => !prev)}
+                aria-expanded={showTranscript}
+              >
+                <FileText size={13} />
+                <span>{showTranscript ? 'HIDE READABLE TRANSCRIPT' : 'READABLE TRANSCRIPT (NO AUDIO REQUIRED)'}</span>
+              </button>
+              <span className="audio-state-tag">
+                STATE: <b>{narration.audioState}</b>
+              </span>
+            </div>
+
+            {/* Accessible Full Readable Transcript Panel */}
+            {showTranscript && (
+              <div className="transcript-box glass-panel" role="region" aria-label="Readable Narration Transcript">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <ContentClassificationBadge type="EDUCATIONAL DRAMATIZATION" />
+                  <span style={{ fontSize: '11px', color: '#94A3B8' }}>Est. Reading Time: 1.5 min</span>
+                </div>
+                <h4>Complete Narration Transmission Transcript</h4>
+                <p className="transcript-text">{machine.audioText}</p>
+                <div className="citation-line" style={{ marginTop: '8px' }}>
+                  <ShieldCheck size={12} /> Grounded in {machine.cite}
+                </div>
+              </div>
             )}
           </div>
 
@@ -749,9 +1165,11 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
         </div>
       </div>
 
-      <div className="story-tabs-nav">
+      {/* Tabs Navigation */}
+      <div className="story-tabs-nav" role="tablist">
         {[
           ['story', 'THE STORY'],
+          ['guide', 'STUDENT FIELD GUIDE (AGES 13–18)'],
           ['evidence', 'EVIDENCE SCANNER'],
           ['timeline', 'MISSION TIMELINE'],
           ['earth', 'EARTH CONNECTION'],
@@ -759,6 +1177,8 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
         ].map(([key, label]) => (
           <button
             key={key}
+            role="tab"
+            aria-selected={activeTab === key}
             className={`story-tab-btn ${activeTab === key ? 'active' : ''}`}
             onClick={() => setActiveTab(key)}
           >
@@ -768,9 +1188,13 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
       </div>
 
       <div className="story-panel-body">
+        {/* TAB 1: THE STORY */}
         {activeTab === 'story' && (
           <div>
-            <div className="panel-header-badge">EDUCATIONAL DRAMATIZATION · NASA SOURCE REFERENCE</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <ContentClassificationBadge type="EDUCATIONAL DRAMATIZATION" />
+              <ContentClassificationBadge type="DOCUMENTED FACT" />
+            </div>
             <h2>“I am {machine.name}.”</h2>
             <p className="panel-quote">{machine.audioText}</p>
             <div style={{ margin: '14px 0 20px', padding: '10px 14px', background: 'rgba(5, 7, 15, 0.5)', border: '1px solid rgba(56, 189, 248, 0.15)', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '8px', color: '#8791AA', font: '400 11px "DM Mono", monospace' }}>
@@ -779,58 +1203,249 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
                 <strong>Educational Dramatization Notice:</strong> First-person voice memoirs are dramatized for educational engagement. All operational dates, resting locations, coordinates, and scientific achievements are verified against official NASA NSSDCA catalogs.
               </span>
             </div>
+
+            {/* Multi-Location Sites Selector if Machine has multiple physical sites */}
+            {machine.locations && machine.locations.length > 1 && (
+              <div className="locations-explorer-strip glass-panel" style={{ marginBottom: '20px', padding: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <Compass size={15} color="#38BDF8" />
+                  <span style={{ font: '700 12px "DM Mono", monospace', color: '#38BDF8', letterSpacing: '0.1em' }}>
+                    VERIFIED PHYSICAL SITES IN ARCHIVE ({machine.locations.length} DISTINCT LOCATIONS)
+                  </span>
+                </div>
+                <div className="locations-pills-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {machine.locations.map((loc, idx) => (
+                    <div
+                      key={loc.id || idx}
+                      className="location-site-card glass-panel"
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(56, 189, 248, 0.25)',
+                        background: 'rgba(11, 17, 32, 0.85)',
+                        flex: '1 1 calc(33.333% - 12px)',
+                        minWidth: '220px'
+                      }}
+                    >
+                      <b style={{ color: '#F3F5FF', fontSize: '13px', display: 'block', marginBottom: '4px' }}>
+                        {loc.name}
+                      </b>
+                      <div style={{ font: '500 11px "DM Mono", monospace', color: '#38BDF8', marginBottom: '4px' }}>
+                        {loc.lat >= 0 ? `${loc.lat}° N` : `${Math.abs(loc.lat)}° S`},{' '}
+                        {loc.lon >= 0 ? `${loc.lon}° E` : `${Math.abs(loc.lon)}° W`}
+                      </div>
+                      <small style={{ color: '#94A3B8', fontSize: '11px', display: 'block' }}>
+                        {loc.siteDetail || loc.siteName || loc.status}
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="fact-cards-grid">
               <div className="fact-card-box glass-panel">
-                <small>FINAL RESTING PLACE</small>
+                <ContentClassificationBadge type="DOCUMENTED FACT" />
+                <small style={{ marginTop: '8px', display: 'block' }}>PRIMARY RESTING PLACE</small>
                 <b>{machine.coordinates}</b>
               </div>
               <div className="fact-card-box glass-panel">
-                <small>MISSION SUMMARY</small>
+                <ContentClassificationBadge type="DOCUMENTED FACT" />
+                <small style={{ marginTop: '8px', display: 'block' }}>MISSION LIFESPAN</small>
                 <b>{machine.stat}</b>
               </div>
               <div className="fact-card-box glass-panel">
-                <small>CATALOG RECORD</small>
+                <ContentClassificationBadge type="DOCUMENTED FACT" />
+                <small style={{ marginTop: '8px', display: 'block' }}>NSSDCA MASTER ID</small>
                 <b>{machine.nssdcId}</b>
               </div>
             </div>
           </div>
         )}
 
+        {/* TAB 2: STUDENT FIELD GUIDE (AGES 13–18) - PHASE 3 */}
+        {activeTab === 'guide' && (
+          <div className="student-guide-panel">
+            <div className="guide-intro-banner glass-panel">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <GraduationCap size={20} color="#38BDF8" />
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '16px', color: '#FFFFFF' }}>STUDENT FIELD GUIDE · SECONDARY EDUCATION</h3>
+                    <small style={{ color: '#94A3B8', fontFamily: 'DM Mono' }}>
+                      Curriculum-aligned science investigation for Ages 13–18 (Grades 8–12)
+                    </small>
+                  </div>
+                </div>
+                <ContentClassificationBadge type="DOCUMENTED FACT" />
+              </div>
+              <p style={{ margin: '12px 0 0', fontSize: '13px', lineHeight: '1.6', color: '#E2E8F0' }}>
+                This guide provides clear, mathematically and scientifically verified answers to the 7 core questions
+                of space archaeology, grounded in NASA mission datasets.
+              </p>
+            </div>
+
+            <div className="guide-qa-grid">
+              {machine.studentGuide ? (
+                <>
+                  <div className="guide-card glass-panel">
+                    <div className="guide-q-num">01</div>
+                    <div className="guide-q-body">
+                      <h4>What is it?</h4>
+                      <p>{machine.studentGuide.whatIsIt}</p>
+                    </div>
+                  </div>
+
+                  <div className="guide-card glass-panel">
+                    <div className="guide-q-num">02</div>
+                    <div className="guide-q-body">
+                      <h4>Why was it sent?</h4>
+                      <p>{machine.studentGuide.whyWasItSent}</p>
+                    </div>
+                  </div>
+
+                  <div className="guide-card glass-panel">
+                    <div className="guide-q-num">03</div>
+                    <div className="guide-q-body">
+                      <h4>How did it work?</h4>
+                      <p>{machine.studentGuide.howDidItWork}</p>
+                    </div>
+                  </div>
+
+                  <div className="guide-card glass-panel">
+                    <div className="guide-q-num">04</div>
+                    <div className="guide-q-body">
+                      <h4>What did it discover?</h4>
+                      <p>{machine.studentGuide.whatDidItDiscover}</p>
+                    </div>
+                  </div>
+
+                  <div className="guide-card glass-panel">
+                    <div className="guide-q-num">05</div>
+                    <div className="guide-q-body">
+                      <h4>What happened to it?</h4>
+                      <p>{machine.studentGuide.whatHappenedToIt}</p>
+                    </div>
+                  </div>
+
+                  <div className="guide-card glass-panel">
+                    <div className="guide-q-num">06</div>
+                    <div className="guide-q-body">
+                      <h4>Why does it matter today?</h4>
+                      <p>{machine.studentGuide.whyDoesItMatter}</p>
+                    </div>
+                  </div>
+
+                  <div className="guide-card glass-panel full-span">
+                    <div className="guide-q-num">07</div>
+                    <div className="guide-q-body">
+                      <h4>Did we learn something unexpected?</h4>
+                      <p>{machine.studentGuide.unexpectedDiscovery}</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ color: '#94A3B8', padding: '20px' }}>
+                  Student guide is compiling for this catalog entry.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: EVIDENCE SCANNER (STATE B INTERACTION) */}
         {activeTab === 'evidence' && (
           <div>
-            <div className="panel-header-badge">SOURCE-VERIFIED EVIDENCE ARCHIVE</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <ContentClassificationBadge type="DOCUMENTED FACT" />
+              <ContentClassificationBadge type="SCIENTIFIC INTERPRETATION" />
+            </div>
             <h2>Artifact Evidence Verification</h2>
-            <div className="evidence-scan-action-box">
-              <button
-                className={`evidence-scan-btn ${isScanned ? 'scanned' : ''}`}
-                onClick={onScan}
-              >
-                <Zap size={16} />
-                {isScanned ? 'EVIDENCE SCANNED & LOGGED (+120 XP)' : 'SCAN FOR EVIDENCE'}
-              </button>
-              <span className="citation-line">
-                <ShieldCheck size={14} /> Grounded in NASA NSSDCA Master Catalogs
-              </span>
+
+            {/* Explicit Interactive Scanner Section (Separates State A from State B) */}
+            <div className="evidence-scan-action-box glass-panel" style={{ padding: '20px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <div style={{ font: '700 12px "DM Mono", monospace', color: isScanned ? '#10B981' : '#38BDF8', letterSpacing: '0.12em' }}>
+                    {isScanned ? 'EVIDENCE STATUS: VERIFIED & LOGGED' : 'EVIDENCE STATUS: TELEMETRY SCAN REQUIRED'}
+                  </div>
+                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#94A3B8' }}>
+                    {isScanned
+                      ? 'Telemetry and telemetry logs have been validated and cataloged in your Legacy Capsule.'
+                      : 'Trigger active sensor sweep to log authentic NSSDCA engineering and telemetry evidence.'}
+                  </p>
+                </div>
+
+                <button
+                  className={`evidence-scan-btn ${isScanned ? 'scanned' : ''}`}
+                  onClick={handlePerformEvidenceScan}
+                  disabled={isScanned || isScanningInteractive}
+                  aria-label="Scan Artifact Telemetry"
+                >
+                  <Zap size={16} />
+                  {isScanningInteractive
+                    ? `SCANNING TELEMETRY... ${scanProgress}%`
+                    : isScanned
+                    ? 'EVIDENCE SCANNED & LOGGED (+120 XP)'
+                    : 'SCAN ARTIFACT TELEMETRY (+120 XP)'}
+                </button>
+              </div>
+
+              {isScanningInteractive && (
+                <div className="interactive-scan-progress-bar" style={{ marginTop: '14px' }}>
+                  <div
+                    className="interactive-scan-progress-fill"
+                    style={{
+                      height: '4px',
+                      background: 'linear-gradient(90deg, #38BDF8, #7C3AED)',
+                      width: `${scanProgress}%`,
+                      transition: 'width 0.2s ease',
+                      borderRadius: '2px'
+                    }}
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '12px' }}>
+                <span className="citation-line">
+                  <ShieldCheck size={14} /> Grounded in NASA NSSDCA Master Catalogs
+                </span>
+                <span style={{ fontSize: '11px', color: '#64748B', fontFamily: 'DM Mono' }}>
+                  Awards +120 XP once upon scan completion
+                </span>
+              </div>
             </div>
 
             <div className="evidence-grid-cards">
               <div className="evidence-item-card glass-panel">
-                <Zap size={18} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <Zap size={18} />
+                  <ContentClassificationBadge type="DOCUMENTED FACT" />
+                </div>
                 <small>ENGINEERING EVIDENCE</small>
                 <p>{machine.evidence.engineering}</p>
               </div>
               <div className="evidence-item-card glass-panel">
-                <Radio size={18} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <Radio size={18} />
+                  <ContentClassificationBadge type="DOCUMENTED FACT" />
+                </div>
                 <small>TELEMETRY EVIDENCE</small>
                 <p>{machine.evidence.telemetry}</p>
               </div>
               <div className="evidence-item-card glass-panel">
-                <Sparkles size={18} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <Sparkles size={18} />
+                  <ContentClassificationBadge type="SCIENTIFIC INTERPRETATION" />
+                </div>
                 <small>SCIENTIFIC EVIDENCE</small>
                 <p>{machine.evidence.science}</p>
               </div>
               <div className="evidence-item-card glass-panel">
-                <LockKeyhole size={18} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <LockKeyhole size={18} />
+                  <ContentClassificationBadge type="DOCUMENTED FACT" />
+                </div>
                 <small>CURRENT STATUS</small>
                 <p>{machine.evidence.status}</p>
               </div>
@@ -919,14 +1534,20 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
           </div>
         )}
 
+        {/* TAB 4: MISSION TIMELINE */}
         {activeTab === 'timeline' && (
           <div>
-            <div className="panel-header-badge">CHRONOLOGICAL MILESTONE RECORD</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <ContentClassificationBadge type="DOCUMENTED FACT" />
+            </div>
             <h2>Rebuild the Mission Timeline</h2>
             <div className="timeline-stepper">
               {machine.timeline.map((step) => (
                 <div key={step.step} className="timeline-step-node">
-                  <small>STAGE {step.step}</small>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <small>STAGE {step.step}</small>
+                    <ContentClassificationBadge type={step.classification || 'DOCUMENTED FACT'} />
+                  </div>
                   <h4>{step.title}</h4>
                   <p>{step.desc}</p>
                 </div>
@@ -935,9 +1556,12 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
           </div>
         )}
 
+        {/* TAB 5: EARTH CONNECTION */}
         {activeTab === 'earth' && (
           <div>
-            <div className="panel-header-badge">FROM SPACE TO HOME</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <ContentClassificationBadge type="DOCUMENTED FACT" />
+            </div>
             <h2>Earth Connection & Technological Heritage</h2>
             <div className="earth-connection-box glass-panel">
               <p className="panel-quote">{machine.earthConnection}</p>
@@ -952,9 +1576,12 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
           </div>
         )}
 
+        {/* TAB 6: ASK THE EXPLORER */}
         {activeTab === 'ask' && (
           <div>
-            <div className="panel-header-badge">GROUNDED INTERACTIVE INQUIRY · NO FABRICATION</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+              <ContentClassificationBadge type="DOCUMENTED FACT" />
+            </div>
             <h2>Ask {machine.name}</h2>
             <div className="ask-machine-box glass-panel">
               <textarea
@@ -1002,15 +1629,12 @@ function FullStoryExperience({ machine, onBack, onScan, isScanned }) {
 }
 
 // ==========================================
-// UPGRADED MODALS: COMPARE, INSPECTOR, CONTROL, CERTIFICATE
+// UPGRADED MODALS: MISSION CONTROL (PERSISTED), COMPARE, INSPECTOR, CERTIFICATE
 // ==========================================
 
-function MissionControlModal({ onClose, onRewardXp }) {
-  const [activeCase, setActiveCase] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [completedCases, setCompletedCases] = useState([]);
-
-  const cases = [
+// Phase 2: Persisted Quiz Progress in localStorage (nebula-quiz-progress-v1)
+export function MissionControlModal({ onClose, onRewardXp }) {
+  const cases = useMemo(() => [
     {
       id: 'mer-b',
       title: 'CASE 01 · OPPORTUNITY',
@@ -1053,25 +1677,99 @@ function MissionControlModal({ onClose, onRewardXp }) {
       explanation: 'Designed by Carl Sagan and Linda Salzman Sagan, the 6x9 inch gold-anodized plaques portray a man and woman, the hyper-fine transition of neutral hydrogen, and a pulsar map indicating the sun’s location in the Milky Way.',
       citation: 'NSSDCA Pioneer 10 Mission Catalog · NASA Ames'
     }
-  ];
+  ], []);
+
+  // Safe load from localStorage
+  const loadSavedProgress = () => {
+    try {
+      const raw = localStorage.getItem('nebula-quiz-progress-v1');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.completedCaseIds)) {
+          return {
+            completedCaseIds: parsed.completedCaseIds,
+            answers: parsed.answers || {},
+            quizScore: typeof parsed.quizScore === 'number' ? parsed.quizScore : parsed.completedCaseIds.length,
+            earnedQuizXp: typeof parsed.earnedQuizXp === 'number' ? parsed.earnedQuizXp : parsed.completedCaseIds.length * 100,
+            completedAt: parsed.completedAt || null
+          };
+        }
+      }
+    } catch {
+      // recovery fallback
+    }
+    return {
+      completedCaseIds: [],
+      answers: {},
+      quizScore: 0,
+      earnedQuizXp: 0,
+      completedAt: null
+    };
+  };
+
+  const [activeCase, setActiveCase] = useState(0);
+  const [quizProgress, setQuizProgress] = useState(loadSavedProgress);
 
   const currentCase = cases[activeCase];
+  const selectedAnswer = quizProgress.answers[currentCase.id] ?? null;
 
   const handleSelectOption = (index, isCorrect) => {
-    setSelectedAnswer(index);
-    if (isCorrect && !completedCases.includes(activeCase)) {
-      setCompletedCases([...completedCases, activeCase]);
+    const nextAnswers = { ...quizProgress.answers, [currentCase.id]: index };
+    let nextCompleted = [...quizProgress.completedCaseIds];
+    let addedXp = 0;
+
+    if (isCorrect && !nextCompleted.includes(currentCase.id)) {
+      nextCompleted.push(currentCase.id);
+      addedXp = 100;
       onRewardXp?.(100);
+    }
+
+    const updated = {
+      completedCaseIds: nextCompleted,
+      answers: nextAnswers,
+      quizScore: nextCompleted.length,
+      earnedQuizXp: quizProgress.earnedQuizXp + addedXp,
+      completedAt: nextCompleted.length === cases.length ? new Date().toISOString() : quizProgress.completedAt
+    };
+
+    setQuizProgress(updated);
+    try {
+      localStorage.setItem('nebula-quiz-progress-v1', JSON.stringify(updated));
+    } catch {
+      // storage quota fallback
+    }
+  };
+
+  const handleResetQuiz = () => {
+    if (window.confirm('Reset all Mission Control quiz progress?')) {
+      const empty = {
+        completedCaseIds: [],
+        answers: {},
+        quizScore: 0,
+        earnedQuizXp: 0,
+        completedAt: null
+      };
+      setQuizProgress(empty);
+      try {
+        localStorage.removeItem('nebula-quiz-progress-v1');
+      } catch {
+        // ignore
+      }
     }
   };
 
   return (
     <div className="modal-backdrop-glass" onClick={onClose}>
       <div className="modal-dialog-box glass-panel" style={{ width: 'min(760px, 95vw)' }} onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-icon-btn" onClick={onClose}>
+        <button className="modal-close-icon-btn" onClick={onClose} aria-label="Close Mission Control">
           <X size={18} />
         </button>
-        <div className="modal-eyebrow">MISSION CONTROL · SIMULATED FLIGHT INVESTIGATION</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <div className="modal-eyebrow">MISSION CONTROL · SIMULATED FLIGHT INVESTIGATION</div>
+          <div style={{ font: '600 11px "DM Mono", monospace', color: '#10B981' }}>
+            PROGRESS: {quizProgress.completedCaseIds.length}/{cases.length} RESOLVED (+{quizProgress.earnedQuizXp} XP)
+          </div>
+        </div>
         <h2>The Last Signal Challenge</h2>
         <p className="modal-lead">
           Investigate authentic operational anomalies recorded in documented NASA flight telemetry.
@@ -1082,12 +1780,9 @@ function MissionControlModal({ onClose, onRewardXp }) {
             <button
               key={c.id}
               className={`scenario-case-btn ${activeCase === i ? 'active' : ''}`}
-              onClick={() => {
-                setActiveCase(i);
-                setSelectedAnswer(null);
-              }}
+              onClick={() => setActiveCase(i)}
             >
-              {c.title} {completedCases.includes(i) && '✓'}
+              {c.title} {quizProgress.completedCaseIds.includes(c.id) && '✓'}
             </button>
           ))}
         </div>
@@ -1125,6 +1820,16 @@ function MissionControlModal({ onClose, onRewardXp }) {
             </div>
           </div>
         )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+          <button
+            className="transcript-toggle-btn"
+            style={{ color: '#94A3B8', border: '1px solid rgba(148, 163, 184, 0.2)' }}
+            onClick={handleResetQuiz}
+          >
+            RESET QUIZ PROGRESS
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1140,7 +1845,7 @@ function CompareModal({ onClose }) {
   return (
     <div className="modal-backdrop-glass" onClick={onClose}>
       <div className="modal-dialog-box glass-panel compare-modal-wide" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-icon-btn" onClick={onClose}>
+        <button className="modal-close-icon-btn" onClick={onClose} aria-label="Close Comparison Lab">
           <X size={18} />
         </button>
         <div className="modal-eyebrow">ARCHIVE ANALYSIS · SIDE-BY-SIDE TELEMETRY LAB</div>
@@ -1154,6 +1859,7 @@ function CompareModal({ onClose }) {
             className="compare-select-dropdown"
             value={leftId}
             onChange={(e) => setLeftId(e.target.value)}
+            aria-label="Select Left Machine"
           >
             {machines.map((m) => (
               <option key={m.id} value={m.id}>
@@ -1168,6 +1874,7 @@ function CompareModal({ onClose }) {
             className="compare-select-dropdown"
             value={rightId}
             onChange={(e) => setRightId(e.target.value)}
+            aria-label="Select Right Machine"
           >
             {machines.map((m) => (
               <option key={m.id} value={m.id}>
@@ -1239,7 +1946,7 @@ function ImageInspectorModal({ onClose }) {
   return (
     <div className="modal-backdrop-glass" onClick={onClose}>
       <div className="modal-dialog-box glass-panel inspector-modal-wide" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-icon-btn" onClick={onClose}>
+        <button className="modal-close-icon-btn" onClick={onClose} aria-label="Close Image Inspector">
           <X size={18} />
         </button>
         <div className="modal-eyebrow">NSSDCA PHOTOGRAPHIC ARCHIVE INSPECTOR</div>
@@ -1316,7 +2023,7 @@ function ImageInspectorModal({ onClose }) {
 }
 
 // Visual Certificate Generator Component (1600x1130 Canvas PNG + Print/Save as PDF)
-function VisualCertificateModal({ scannedIds, bonusXp = 0, onClose }) {
+function VisualCertificateModal({ scannedIds, exploredIds = [], bonusXp = 0, onClose }) {
   const [displayName, setDisplayName] = useState('Space Explorer');
   const certCanvasRef = useRef(null);
 
@@ -1369,7 +2076,7 @@ function VisualCertificateModal({ scannedIds, bonusXp = 0, onClose }) {
   return (
     <div className="modal-backdrop-glass" onClick={onClose}>
       <div className="modal-dialog-box glass-panel certificate-modal-dialog" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-icon-btn" onClick={onClose}>
+        <button className="modal-close-icon-btn" onClick={onClose} aria-label="Close Certificate Modal">
           <X size={18} />
         </button>
 
@@ -1420,25 +2127,34 @@ function VisualCertificateModal({ scannedIds, bonusXp = 0, onClose }) {
             <small>CURRENT EXPLORER RANK</small>
             <b>{rank}</b>
             <span style={{ fontSize: '11px', color: '#38BDF8' }}>
-              {xp} Total XP · {scannedCount}/{totalCount} Artifacts Discovered
+              {xp} Total XP · {scannedCount}/{totalCount} Artifacts Scanned · {exploredIds.length}/{totalCount} Explored
             </span>
           </div>
         </div>
 
         <div className="collected-artifacts-flow">
-          {machines
-            .filter((m) => scannedIds.includes(m.id))
-            .map((m) => (
-              <div key={m.id} className="artifact-collected-badge">
-                <ShieldCheck size={13} color="#38BDF8" />
+          {machines.map((m) => {
+            const isScannedItem = scannedIds.includes(m.id);
+            const isExploredItem = exploredIds.includes(m.id);
+            return (
+              <div
+                key={m.id}
+                className={`artifact-collected-badge ${isScannedItem ? 'scanned' : isExploredItem ? 'explored' : 'unscanned'}`}
+              >
+                {isScannedItem ? (
+                  <ShieldCheck size={13} color="#10B981" />
+                ) : isExploredItem ? (
+                  <Compass size={13} color="#38BDF8" />
+                ) : (
+                  <LockKeyhole size={13} color="#64748B" />
+                )}
                 <span>{m.name}</span>
+                <small style={{ fontSize: '9px', marginLeft: '4px', opacity: 0.8 }}>
+                  {isScannedItem ? '(+120 XP)' : isExploredItem ? '(Explored)' : ''}
+                </small>
               </div>
-            ))}
-          {scannedCount === 0 && (
-            <div style={{ color: '#94A3B8', fontSize: '12px' }}>
-              Scan an artifact in planetary exploration to begin cataloging your collection.
-            </div>
-          )}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -1454,19 +2170,46 @@ export default function App() {
   const [started, setStarted] = useState(false);
   const [hoveredDest, setHoveredDest] = useState(null);
 
-  const [hoveredMachine, setHoveredMachine] = useState(null);
+  const [hoveredPin, setHoveredPin] = useState(null);
   const [previewMachine, setPreviewMachine] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [activeStoryMachine, setActiveStoryMachine] = useState(null);
 
-  const [scannedIds, setScannedIds] = useState(() => {
+  // State A: Explored machine IDs (persisted under nebula-explored-v1)
+  const [exploredIds, setExploredIds] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('nebula-scanned-v2') || '[]');
+      return JSON.parse(localStorage.getItem('nebula-explored-v1') || '[]');
     } catch {
       return [];
     }
   });
 
-  const [bonusXp, setBonusXp] = useState(0);
+  // State B: Scanned machine IDs (persisted under nebula-scanned-v1)
+  const [scannedIds, setScannedIds] = useState(() => {
+    try {
+      const v1 = localStorage.getItem('nebula-scanned-v1');
+      if (v1) return JSON.parse(v1);
+      const v2 = localStorage.getItem('nebula-scanned-v2');
+      if (v2) return JSON.parse(v2);
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  // Quiz progress bonus XP
+  const [quizBonusXp, setQuizBonusXp] = useState(() => {
+    try {
+      const raw = localStorage.getItem('nebula-quiz-progress-v1');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return typeof parsed.earnedQuizXp === 'number' ? parsed.earnedQuizXp : (parsed.completedCaseIds?.length || 0) * 100;
+      }
+    } catch {
+      // ignore
+    }
+    return 0;
+  });
 
   // Modals
   const [showQuiz, setShowQuiz] = useState(false);
@@ -1475,28 +2218,72 @@ export default function App() {
   const [showInspector, setShowInspector] = useState(false);
   const [showSources, setShowSources] = useState(false);
 
+  // State A: Recording exploration (does NOT award XP or mark scanned)
+  const handleExplore = (id) => {
+    if (!exploredIds.includes(id)) {
+      const next = [...exploredIds, id];
+      setExploredIds(next);
+      try {
+        localStorage.setItem('nebula-explored-v1', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  // State B: Explicit evidence scan completion (awards +120 XP once)
   const handleScan = (id) => {
     if (!scannedIds.includes(id)) {
       const next = [...scannedIds, id];
       setScannedIds(next);
-      localStorage.setItem('nebula-scanned-v2', JSON.stringify(next));
+      try {
+        localStorage.setItem('nebula-scanned-v1', JSON.stringify(next));
+        localStorage.setItem('nebula-scanned-v2', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
     }
+    handleExplore(id);
   };
 
   const handleRewardBonusXp = (pts) => {
-    setBonusXp((prev) => prev + pts);
+    setQuizBonusXp((prev) => prev + pts);
   };
 
   const handleSelectDestination = (destId) => {
     setCurrentView(destId);
     setPreviewMachine(null);
+    setSelectedLocation(null);
     setHoveredDest(null);
   };
 
   const handleBackToSolar = () => {
     setCurrentView('solar');
     setPreviewMachine(null);
+    setSelectedLocation(null);
   };
+
+  const handleSelectMachineFromPin = (machine, location) => {
+    setPreviewMachine(machine);
+    setSelectedLocation(location || machine.locations?.[0] || null);
+  };
+
+  // Global Keyboard Navigation (Phase 2 & 3: Escape listener, Tab navigation)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (showQuiz) setShowQuiz(false);
+        else if (showLegacy) setShowLegacy(false);
+        else if (showCompare) setShowCompare(false);
+        else if (showInspector) setShowInspector(false);
+        else if (showSources) setShowSources(false);
+        else if (activeStoryMachine) setActiveStoryMachine(null);
+        else if (previewMachine) setPreviewMachine(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showQuiz, showLegacy, showCompare, showInspector, showSources, activeStoryMachine, previewMachine]);
 
   const currentDestMeta = destinationsMeta[currentView];
 
@@ -1507,7 +2294,7 @@ export default function App() {
 
       {/* Top Navigation Bar */}
       <header className="topbar">
-        <button className="brand-btn" onClick={handleBackToSolar}>
+        <button className="brand-btn" onClick={handleBackToSolar} aria-label="Nebula X Home">
           <div className="brand-mark">
             <span />
           </div>
@@ -1517,7 +2304,7 @@ export default function App() {
           </div>
         </button>
 
-        <nav className="main-nav">
+        <nav className="main-nav" aria-label="Main Archive Navigation">
           <button
             className={currentView === 'solar' ? 'active' : ''}
             onClick={handleBackToSolar}
@@ -1532,9 +2319,9 @@ export default function App() {
         </nav>
 
         <div className="top-right-actions">
-          <div className="progress-pill">
+          <div className="progress-pill" title={`${scannedIds.length} Scanned, ${exploredIds.length} Explored out of 13`}>
             <span>ARCHIVE PROGRESS</span>
-            <b>{scannedIds.length}/13</b>
+            <b>{scannedIds.length}/13 SCANNED</b>
             <div className="progress-bar-inline">
               <i style={{ width: `${(scannedIds.length / 13) * 100}%` }} />
             </div>
@@ -1542,7 +2329,7 @@ export default function App() {
           <button
             className="icon-btn-round"
             onClick={() => setShowLegacy(true)}
-            aria-label="Profile"
+            aria-label="Open Explorer Profile and Certificate"
           >
             <CircleUserRound size={18} />
           </button>
@@ -1564,28 +2351,31 @@ export default function App() {
 
           {currentView === 'moon' && (
             <MoonGlobeScene
-              onSelectMachine={setPreviewMachine}
-              hoveredMachine={hoveredMachine}
-              onHoverMachine={setHoveredMachine}
+              onSelectMachine={handleSelectMachineFromPin}
+              hoveredPin={hoveredPin}
+              onHoverPin={setHoveredPin}
               previewMachine={previewMachine}
+              selectedLocation={selectedLocation}
             />
           )}
 
           {currentView === 'mars' && (
             <MarsGlobeScene
-              onSelectMachine={setPreviewMachine}
-              hoveredMachine={hoveredMachine}
-              onHoverMachine={setHoveredMachine}
+              onSelectMachine={handleSelectMachineFromPin}
+              hoveredPin={hoveredPin}
+              onHoverPin={setHoveredPin}
               previewMachine={previewMachine}
+              selectedLocation={selectedLocation}
             />
           )}
 
           {currentView === 'deep' && (
             <DeepSpaceScene
-              onSelectMachine={setPreviewMachine}
-              hoveredMachine={hoveredMachine}
-              onHoverMachine={setHoveredMachine}
+              onSelectMachine={handleSelectMachineFromPin}
+              hoveredPin={hoveredPin}
+              onHoverPin={setHoveredPin}
               previewMachine={previewMachine}
+              selectedLocation={selectedLocation}
             />
           )}
         </Canvas>
@@ -1615,6 +2405,7 @@ export default function App() {
                 <button
                   className={`start-btn ${started ? 'active' : ''}`}
                   onClick={() => setStarted((prev) => !prev)}
+                  aria-expanded={started}
                 >
                   {started ? 'SELECT A DESTINATION' : 'START EXPLORATION'}
                   <ArrowRight size={16} />
@@ -1645,7 +2436,7 @@ export default function App() {
         {currentView !== 'solar' && (
           <>
             <div className="planet-hud-top">
-              <button className="back-btn" onClick={handleBackToSolar}>
+              <button className="back-btn" onClick={handleBackToSolar} aria-label="Return to Solar System">
                 ← BACK TO SOLAR SYSTEM
               </button>
               <div className="planet-title-badge">
@@ -1661,16 +2452,20 @@ export default function App() {
                 <p>{currentDestMeta.intro}</p>
               </div>
 
-              <div className="machine-chips-list">
+              {/* Accessible HTML Fallback Machine Selector */}
+              <div className="machine-chips-list" role="navigation" aria-label="Equipment Selector">
                 {machines
                   .filter((m) => m.destination === currentView)
                   .map((m) => (
                     <button
                       key={m.id}
                       className={`machine-chip ${previewMachine?.id === m.id ? 'active' : ''}`}
-                      onClick={() => setPreviewMachine(m)}
-                      onMouseEnter={() => setHoveredMachine(m.id)}
-                      onMouseLeave={() => setHoveredMachine(null)}
+                      onClick={() => {
+                        setPreviewMachine(m);
+                        setSelectedLocation(m.locations?.[0] || null);
+                      }}
+                      onMouseEnter={() => setHoveredPin(m.id)}
+                      onMouseLeave={() => setHoveredPin(null)}
                     >
                       <i />
                       <span>{m.shortName}</span>
@@ -1688,7 +2483,10 @@ export default function App() {
           <div className="machine-preview-card glass-panel">
             <button
               className="close-preview-btn"
-              onClick={() => setPreviewMachine(null)}
+              onClick={() => {
+                setPreviewMachine(null);
+                setSelectedLocation(null);
+              }}
               aria-label="Close Preview"
             >
               <X size={16} />
@@ -1708,10 +2506,37 @@ export default function App() {
               <div className="preview-tag">{previewMachine.tag}</div>
             </div>
 
-            <div className="preview-eyebrow">{previewMachine.place}</div>
+            <div className="preview-eyebrow">
+              {selectedLocation?.name || previewMachine.place}
+            </div>
             <h3>{previewMachine.name}</h3>
-            <p className="preview-place">{previewMachine.coordinates}</p>
+            <p className="preview-place">
+              {selectedLocation?.lat !== undefined && selectedLocation?.lon !== undefined
+                ? `${selectedLocation.lat >= 0 ? `${selectedLocation.lat}°N` : `${Math.abs(selectedLocation.lat)}°S`}, ${selectedLocation.lon >= 0 ? `${selectedLocation.lon}°E` : `${Math.abs(selectedLocation.lon)}°W`}`
+                : previewMachine.coordinates}
+            </p>
             <p className="preview-desc">{previewMachine.desc}</p>
+
+            {/* If machine has multiple verified sites, show clickable pill list */}
+            {previewMachine.locations && previewMachine.locations.length > 1 && (
+              <div className="preview-sites-row" style={{ margin: '8px 0 14px' }}>
+                <small style={{ color: '#38BDF8', fontFamily: 'DM Mono', fontSize: '10px', display: 'block', marginBottom: '4px' }}>
+                  VERIFIED LANDING SITES ({previewMachine.locations.length}):
+                </small>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {previewMachine.locations.map((loc) => (
+                    <button
+                      key={loc.id || loc.name}
+                      onClick={() => setSelectedLocation(loc)}
+                      className={`prompt-pill ${selectedLocation?.id === loc.id ? 'active' : ''}`}
+                      style={{ fontSize: '10px', padding: '3px 8px' }}
+                    >
+                      {loc.name.split('·')[0].trim()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="preview-meta-row">
               <div className="preview-meta-item">
@@ -1724,14 +2549,15 @@ export default function App() {
               </div>
             </div>
 
+            {/* State A Exploration Trigger: Opens Story and marks explored, does NOT award scan XP */}
             <button
               className="explore-machine-btn"
               onClick={() => {
                 setActiveStoryMachine(previewMachine);
-                handleScan(previewMachine.id);
+                handleExplore(previewMachine.id);
               }}
             >
-              EXPLORE MACHINE →
+              EXPLORE MACHINE ARCHIVE →
             </button>
           </div>
         </div>
@@ -1741,13 +2567,17 @@ export default function App() {
       {activeStoryMachine && (
         <FullStoryExperience
           machine={activeStoryMachine}
-          onBack={() => setActiveStoryMachine(null)}
-          onScan={() => handleScan(activeStoryMachine.id)}
+          selectedLocation={selectedLocation}
+          onBack={() => {
+            setActiveStoryMachine(null);
+          }}
+          onScan={handleScan}
           isScanned={scannedIds.includes(activeStoryMachine.id)}
+          isExplored={exploredIds.includes(activeStoryMachine.id)}
         />
       )}
 
-      {/* MODAL 1: MISSION CONTROL MULTI-CASE SCENARIOS */}
+      {/* MODAL 1: MISSION CONTROL MULTI-CASE SCENARIOS (PERSISTED) */}
       {showQuiz && (
         <MissionControlModal
           onClose={() => setShowQuiz(false)}
@@ -1759,7 +2589,8 @@ export default function App() {
       {showLegacy && (
         <VisualCertificateModal
           scannedIds={scannedIds}
-          bonusXp={bonusXp}
+          exploredIds={exploredIds}
+          bonusXp={quizBonusXp}
           onClose={() => setShowLegacy(false)}
         />
       )}
@@ -1774,7 +2605,7 @@ export default function App() {
       {showSources && (
         <div className="modal-backdrop-glass" onClick={() => setShowSources(false)}>
           <div className="modal-dialog-box glass-panel" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-icon-btn" onClick={() => setShowSources(false)}>
+            <button className="modal-close-icon-btn" onClick={() => setShowSources(false)} aria-label="Close Source Policy">
               <X size={18} />
             </button>
             <div className="modal-eyebrow">ARCHIVE INTEGRITY & CITATION POLICY</div>

@@ -2097,6 +2097,290 @@ nav.main-nav button:hover, nav.main-nav button.active {
 }
 
 /* =========================================================
+   PHASE 2 & 3: ACCESSIBILITY, FOCUS VISIBLE & KEYBOARD NAVIGATION
+   ========================================================= */
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #38BDF8 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.6) !important;
+}
+
+/* Content Classification Badges */
+.content-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.content-badge.documented-fact {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34D399;
+}
+
+.content-badge.scientific-interpretation {
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38BDF8;
+}
+
+.content-badge.educational-dramatization {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #FBBF24;
+}
+
+.content-badge.unverified-claim {
+  background: rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #94A3B8;
+}
+
+/* Audio Controls Additions */
+.audio-aux-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  background: rgba(5, 7, 15, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 6px;
+  color: #E2E8F0;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.audio-aux-btn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38BDF8;
+  color: #FFFFFF;
+}
+
+.audio-aux-btn.muted {
+  border-color: #FB7185;
+  color: #FB7185;
+}
+
+.audio-play-btn.active {
+  background: linear-gradient(135deg, rgba(251, 113, 133, 0.35), rgba(124, 58, 237, 0.35));
+  border-color: #FB7185;
+  color: #FFFFFF;
+}
+
+.audio-state-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: #94A3B8;
+}
+
+.audio-state-tag b {
+  color: #38BDF8;
+}
+
+.transcript-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(11, 17, 32, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 4px;
+  padding: 4px 10px;
+  color: #38BDF8;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.transcript-toggle-btn:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38BDF8;
+}
+
+.transcript-box {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(5, 7, 15, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.transcript-box h4 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-family: 'Space Grotesk', sans-serif;
+  color: #FFFFFF;
+  letter-spacing: 0.05em;
+}
+
+.transcript-text {
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #E2E8F0;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.caption-tag {
+  display: inline-block;
+  margin-right: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #38BDF8;
+  padding: 1px 5px;
+  background: rgba(56, 189, 248, 0.15);
+  border-radius: 3px;
+}
+
+/* Status Pills */
+.target-audience-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  color: #38BDF8;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+.status-pill.scanned {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34D399;
+}
+
+.status-pill.explored {
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38BDF8;
+}
+
+.status-pill.pending {
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #94A3B8;
+}
+
+.artifact-collected-badge.explored {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #93C5FD;
+}
+
+.artifact-collected-badge.unscanned {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(148, 163, 184, 0.2);
+  color: #64748B;
+  opacity: 0.7;
+}
+
+/* Student Field Guide (Ages 13–18) */
+.student-guide-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.guide-intro-banner {
+  padding: 18px 22px;
+  border-radius: 10px;
+  border-left: 3px solid #38BDF8;
+}
+
+.guide-qa-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 860px) {
+  .guide-qa-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.guide-card {
+  display: flex;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 8px;
+  background: rgba(11, 17, 32, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.guide-card:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  transform: translateY(-2px);
+}
+
+.guide-card.full-span {
+  grid-column: 1 / -1;
+  border-left: 3px solid #A78BFA;
+}
+
+.guide-q-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: #38BDF8;
+  opacity: 0.85;
+  line-height: 1;
+}
+
+.guide-q-body h4 {
+  margin: 0 0 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  color: #FFFFFF;
+}
+
+.guide-q-body p {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #CBD5E1;
+}
+
+
+
+/* =========================================================
    CLEAN LANDSCAPE PRINT STYLESHEET (PDF PRINTING)
    ========================================================= */
 @media print {
