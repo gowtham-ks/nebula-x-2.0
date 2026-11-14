@@ -88,6 +88,7 @@ html, body {
   padding: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
   background-color: var(--space-void);
   color: var(--text-main);
@@ -96,11 +97,13 @@ html, body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #root, .app {
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   position: relative;
   overflow: hidden;
   background: radial-gradient(ellipse at 50% 35%, #0b1325 0%, #060914 55%, #030509 100%);
@@ -140,8 +143,12 @@ html, body {
   top: 0;
   left: 0;
   right: 0;
-  height: 68px;
-  padding: 0 3.5vw;
+  min-height: 68px;
+  height: calc(68px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: 0;
+  padding-left: max(3.5vw, env(safe-area-inset-left, 0px));
+  padding-right: max(3.5vw, env(safe-area-inset-right, 0px));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -330,9 +337,15 @@ nav.main-nav button.active {
 .canvas-container {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   position: absolute;
   inset: 0;
   z-index: 5;
+  touch-action: none;
+}
+
+.canvas-container canvas {
+  touch-action: none;
 }
 
 /* =========================================================
@@ -347,7 +360,10 @@ nav.main-nav button.active {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 85px 3.5vw 30px;
+  padding-top: calc(85px + env(safe-area-inset-top, 0px));
+  padding-bottom: max(30px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  padding-left: max(3.5vw, calc(16px + env(safe-area-inset-left, 0px)));
+  padding-right: max(3.5vw, calc(16px + env(safe-area-inset-right, 0px)));
 }
 
 /* =========================================================
@@ -975,7 +991,10 @@ nav.main-nav button.active {
   overflow-y: auto;
   overflow-x: hidden;
   background: radial-gradient(ellipse at 50% 15%, #0c1428 0%, #060914 45%, #030509 90%);
-  padding: 85px 6vw 60px;
+  padding-top: calc(85px + env(safe-area-inset-top, 0px));
+  padding-bottom: max(60px, calc(30px + env(safe-area-inset-bottom, 0px)));
+  padding-left: max(6vw, calc(16px + env(safe-area-inset-left, 0px)));
+  padding-right: max(6vw, calc(16px + env(safe-area-inset-right, 0px)));
   animation: fadeInPage 0.25s ease forwards;
 }
 
@@ -1241,6 +1260,8 @@ nav.main-nav button.active {
   margin-bottom: 24px;
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .story-tab-btn {
@@ -1256,6 +1277,7 @@ nav.main-nav button.active {
   position: relative;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .story-tab-btn:hover {
@@ -1950,7 +1972,10 @@ nav.main-nav button.active {
   -webkit-backdrop-filter: blur(12px);
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding-top: max(20px, calc(10px + env(safe-area-inset-top, 0px)));
+  padding-bottom: max(20px, calc(10px + env(safe-area-inset-bottom, 0px)));
+  padding-left: max(16px, calc(10px + env(safe-area-inset-left, 0px)));
+  padding-right: max(16px, calc(10px + env(safe-area-inset-right, 0px)));
   animation: fadeInModal 0.2s ease forwards;
 }
 
@@ -2492,7 +2517,10 @@ textarea:focus-visible {
   box-shadow: var(--shadow-modal);
   display: flex;
   flex-direction: column;
-  padding: 24px 20px;
+  padding-top: max(24px, calc(16px + env(safe-area-inset-top, 0px)));
+  padding-bottom: max(24px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  padding-right: max(20px, calc(14px + env(safe-area-inset-right, 0px)));
+  padding-left: 20px;
   animation: slideLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
 }
@@ -2573,6 +2601,63 @@ textarea:focus-visible {
 }
 
 /* =========================================================
+   INPUT METHOD ADAPTATIONS (POINTER & HOVER CAPABILITIES)
+   ========================================================= */
+
+@media (pointer: coarse) {
+  .subheading-btn {
+    min-height: 44px;
+    padding: 11px 18px;
+  }
+  .machine-chip {
+    min-height: 44px;
+    padding: 10px 15px;
+  }
+  .scenario-case-btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .audio-play-btn,
+  .audio-aux-btn {
+    min-height: 44px;
+    padding: 0 16px;
+  }
+  .story-tab-btn {
+    min-height: 44px;
+    padding: 12px 18px;
+  }
+  .quiz-option-btn {
+    min-height: 48px;
+    padding: 12px 16px;
+  }
+  .locations-site-card {
+    min-height: 44px;
+  }
+}
+
+@media (hover: none) {
+  .brand-btn:hover,
+  .start-btn:hover,
+  .subheading-btn:hover,
+  .machine-chip:hover,
+  .modal-close-icon-btn:hover,
+  .icon-btn-round:hover,
+  .quiz-option-btn:hover,
+  .story-tab-btn:hover {
+    transform: none !important;
+  }
+  .subheading-btn:active,
+  .machine-chip:active,
+  .start-btn:active,
+  .quiz-option-btn:active,
+  .mobile-nav-link:active {
+    opacity: 0.85;
+    background: rgba(56, 189, 248, 0.18);
+  }
+}
+
+/* =========================================================
    RESPONSIVE DESIGN BREAKPOINTS
    ========================================================= */
 
@@ -2622,8 +2707,11 @@ textarea:focus-visible {
   .compare-vs-badge {
     display: none;
   }
-  .evidence-grid-cards, .fact-cards-grid {
-    grid-template-columns: 1fr;
+  .evidence-grid-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .fact-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   .hero-hud-bottom h1 {
     font-size: 34px;
@@ -2653,7 +2741,8 @@ textarea:focus-visible {
 @media (max-width: 640px) {
   .topbar {
     padding: 0 14px;
-    height: 60px;
+    min-height: 60px;
+    height: calc(60px + env(safe-area-inset-top, 0px));
   }
   .brand-text small {
     display: none;
@@ -2670,6 +2759,33 @@ textarea:focus-visible {
   }
   .modal-dialog-box {
     padding: 20px 16px;
+  }
+  .evidence-grid-cards,
+  .fact-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .locations-site-card {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+  .hud-layer {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(20px, calc(14px + env(safe-area-inset-bottom, 0px)));
+  }
+  .full-story-view {
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-top: calc(72px + env(safe-area-inset-top, 0px));
+  }
+  .hero-hud-bottom h1 {
+    font-size: 28px;
+  }
+  .story-intro-content h1 {
+    font-size: 26px;
+  }
+  .preview-meta-row {
+    grid-template-columns: 1fr;
   }
 }
 
