@@ -187,8 +187,16 @@ export function renderCertificateToCanvas(canvas, data) {
   ctx.fillText('THIS CERTIFICATE IS PROUDLY CONFERRED UPON', centerX, 400);
 
   // 7. Student Display Name
-  const displayName = (name && name.trim()) ? name.trim().toUpperCase() : 'SPACE EXPLORER';
-  ctx.font = '800 60px "Space Grotesk", sans-serif';
+  const cleanName = (name && name.trim()) ? name.trim().slice(0, 50).toUpperCase() : 'SPACE EXPLORER';
+  const displayName = cleanName.replace(/[<>]/g, '');
+
+  let nameFontSize = 60;
+  ctx.font = `800 ${nameFontSize}px "Space Grotesk", sans-serif`;
+  while (ctx.measureText(displayName).width > 1200 && nameFontSize > 24) {
+    nameFontSize -= 4;
+    ctx.font = `800 ${nameFontSize}px "Space Grotesk", sans-serif`;
+  }
+
   ctx.fillStyle = '#FBBF24';
   ctx.shadowColor = 'rgba(251, 191, 36, 0.6)';
   ctx.shadowBlur = 25;

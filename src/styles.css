@@ -298,8 +298,33 @@ nav.main-nav button:hover {
 
 nav.main-nav button.active {
   color: #FFFFFF;
-  background: rgba(56, 189, 248, 0.1);
+  background: rgba(56, 189, 248, 0.12);
   border-color: var(--lunar-cyan-border);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.16);
+}
+
+.nav-breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.breadcrumb-separator {
+  color: var(--border-bright);
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.breadcrumb-dest {
+  color: var(--lunar-cyan);
+  font-weight: 600;
+  background: rgba(56, 189, 248, 0.08);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--lunar-cyan-border);
 }
 
 .top-right-actions {
@@ -365,6 +390,13 @@ nav.main-nav button.active {
   color: #FFFFFF;
   border-color: var(--border-bright);
   background: rgba(56, 189, 248, 0.12);
+}
+
+.icon-btn-round.active {
+  color: #FFFFFF;
+  border-color: var(--lunar-cyan-border);
+  background: rgba(56, 189, 248, 0.16);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
 }
 
 .mobile-nav-toggle-btn {
@@ -2634,6 +2666,26 @@ textarea:focus-visible {
   flex-shrink: 0;
 }
 
+.mobile-nav-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 16px 8px 36px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.mobile-nav-breadcrumb .breadcrumb-separator {
+  color: var(--lunar-cyan);
+  font-size: 12px;
+}
+
+.mobile-nav-breadcrumb .breadcrumb-dest {
+  color: var(--lunar-cyan);
+  font-weight: 600;
+}
+
 .mobile-nav-footer {
   padding-top: 18px;
   border-top: 1px solid var(--border-subtle);
@@ -2833,6 +2885,48 @@ textarea:focus-visible {
   .preview-meta-row {
     grid-template-columns: 1fr;
   }
+  .planet-hud-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .planet-title-badge {
+    text-align: left;
+  }
+  .planet-info-panel {
+    display: none;
+  }
+  .machine-chips-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    padding-bottom: 6px;
+    width: 100%;
+    scrollbar-width: none;
+  }
+  .machine-chip {
+    flex-shrink: 0;
+  }
+  .machine-preview-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .machine-preview-card {
+    width: 100%;
+    max-height: 80vh;
+    max-height: 80dvh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+    animation: slideUpSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}
+
+@keyframes slideUpSheet {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Short-height viewport resilience (landscape mobile / small window) */

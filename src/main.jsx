@@ -2287,16 +2287,63 @@ export default function App() {
         <nav className="main-nav" aria-label="Main Archive Navigation">
           <button
             type="button"
-            className={currentView === 'solar' ? 'active' : ''}
+            className={currentView === 'solar' && !showQuiz && !showLegacy && !showCompare && !showInspector && !showSources ? 'active' : ''}
             onClick={handleBackToSolar}
+            aria-current={currentView === 'solar' && !showQuiz && !showLegacy && !showCompare && !showInspector && !showSources ? 'page' : undefined}
           >
             SOLAR SYSTEM
           </button>
-          <button type="button" onClick={() => setShowQuiz(true)}>MISSION CONTROL</button>
-          <button type="button" onClick={() => setShowLegacy(true)}>MY LEGACY CAPSULE</button>
-          <button type="button" onClick={() => setShowCompare(true)}>COMPARE</button>
-          <button type="button" onClick={() => setShowInspector(true)}>IMAGE INSPECTOR</button>
-          <button type="button" onClick={() => setShowSources(true)}>SOURCE POLICY</button>
+          {currentView !== 'solar' && (
+            <div className="nav-breadcrumb-item" aria-label={`Current Target: ${currentDestMeta?.label}`}>
+              <span className="breadcrumb-separator">/</span>
+              <span className="breadcrumb-dest">{currentDestMeta?.label}</span>
+            </div>
+          )}
+          <button
+            type="button"
+            className={showQuiz ? 'active' : ''}
+            onClick={() => setShowQuiz(true)}
+            aria-haspopup="dialog"
+            aria-expanded={showQuiz}
+          >
+            MISSION CONTROL
+          </button>
+          <button
+            type="button"
+            className={showLegacy ? 'active' : ''}
+            onClick={() => setShowLegacy(true)}
+            aria-haspopup="dialog"
+            aria-expanded={showLegacy}
+          >
+            MY LEGACY CAPSULE
+          </button>
+          <button
+            type="button"
+            className={showCompare ? 'active' : ''}
+            onClick={() => setShowCompare(true)}
+            aria-haspopup="dialog"
+            aria-expanded={showCompare}
+          >
+            COMPARE
+          </button>
+          <button
+            type="button"
+            className={showInspector ? 'active' : ''}
+            onClick={() => setShowInspector(true)}
+            aria-haspopup="dialog"
+            aria-expanded={showInspector}
+          >
+            IMAGE INSPECTOR
+          </button>
+          <button
+            type="button"
+            className={showSources ? 'active' : ''}
+            onClick={() => setShowSources(true)}
+            aria-haspopup="dialog"
+            aria-expanded={showSources}
+          >
+            SOURCE POLICY
+          </button>
         </nav>
 
         <div className="top-right-actions">
@@ -2309,9 +2356,10 @@ export default function App() {
           </div>
           <button
             type="button"
-            className="icon-btn-round"
+            className={`icon-btn-round ${showLegacy ? 'active' : ''}`}
             onClick={() => setShowLegacy(true)}
             aria-label="Open Explorer Profile and Certificate"
+            aria-expanded={showLegacy}
           >
             <CircleUserRound size={18} />
           </button>
@@ -2501,18 +2549,25 @@ export default function App() {
             <nav className="mobile-nav-list" aria-label="Mobile Archive Navigation">
               <button
                 type="button"
-                className={`mobile-nav-link ${currentView === 'solar' ? 'active' : ''}`}
+                className={`mobile-nav-link ${currentView === 'solar' && !showQuiz && !showLegacy && !showCompare && !showInspector && !showSources ? 'active' : ''}`}
                 onClick={() => {
                   handleBackToSolar();
                   setMobileMenuOpen(false);
                 }}
+                aria-current={currentView === 'solar' && !showQuiz && !showLegacy && !showCompare && !showInspector && !showSources ? 'page' : undefined}
               >
                 <Compass size={18} />
                 <span>SOLAR SYSTEM</span>
               </button>
+              {currentView !== 'solar' && (
+                <div className="mobile-nav-breadcrumb" aria-label={`Current Target: ${currentDestMeta?.label}`}>
+                  <span className="breadcrumb-separator">↳</span>
+                  <span className="breadcrumb-dest">{currentDestMeta?.label} ARCHIVE</span>
+                </div>
+              )}
               <button
                 type="button"
-                className="mobile-nav-link"
+                className={`mobile-nav-link ${showQuiz ? 'active' : ''}`}
                 onClick={() => {
                   setShowQuiz(true);
                   setMobileMenuOpen(false);
@@ -2523,7 +2578,7 @@ export default function App() {
               </button>
               <button
                 type="button"
-                className="mobile-nav-link"
+                className={`mobile-nav-link ${showLegacy ? 'active' : ''}`}
                 onClick={() => {
                   setShowLegacy(true);
                   setMobileMenuOpen(false);
@@ -2534,7 +2589,7 @@ export default function App() {
               </button>
               <button
                 type="button"
-                className="mobile-nav-link"
+                className={`mobile-nav-link ${showCompare ? 'active' : ''}`}
                 onClick={() => {
                   setShowCompare(true);
                   setMobileMenuOpen(false);
@@ -2545,7 +2600,7 @@ export default function App() {
               </button>
               <button
                 type="button"
-                className="mobile-nav-link"
+                className={`mobile-nav-link ${showInspector ? 'active' : ''}`}
                 onClick={() => {
                   setShowInspector(true);
                   setMobileMenuOpen(false);
@@ -2556,7 +2611,7 @@ export default function App() {
               </button>
               <button
                 type="button"
-                className="mobile-nav-link"
+                className={`mobile-nav-link ${showSources ? 'active' : ''}`}
                 onClick={() => {
                   setShowSources(true);
                   setMobileMenuOpen(false);
@@ -2662,7 +2717,8 @@ export default function App() {
                 handleExplore(previewMachine.id);
               }}
             >
-              EXPLORE MACHINE ARCHIVE →
+              <span>INVESTIGATE ARTIFACT DOSSIER</span>
+              <ArrowRight size={14} />
             </button>
           </div>
         </div>
